@@ -1,0 +1,144 @@
+#pragma once
+
+#ifdef WOOTINGRGBCONTROL_EXPORTS  
+#define WOOTINGRGBCONTROL_API __declspec(dllexport)   
+#else  
+#define WOOTINGRGBCONTROL_API __declspec(dllimport)   
+#endif
+
+#include "stdint.h"
+#include "stdbool.h"
+
+typedef void(*void_cb)(void);
+
+#define WOOTING_RGB_ROWS 6
+#define WOOTING_RGB_COLS 22
+
+/** @brief Check if keyboard connected.
+
+This function offers a quick check if the keyboard is connected. This doesn't open the keyboard or influences reading.
+
+It is recommended to poll this function at the start of your application and after a disconnect.
+
+@ingroup API
+
+@returns
+This function returns true (1) if keyboard is found.
+*/
+WOOTINGRGBCONTROL_API bool wooting_rgb_kbd_connected(void);
+
+/** @brief Set callback for when a keyboard disconnects.
+
+The callback will be called when a Wooting keyboard disconnects. This will trigger after a failed color change.
+
+@ingroup API
+@param cb The function pointer of the callback
+
+@returns
+None.
+*/
+WOOTINGRGBCONTROL_API void wooting_rgb_set_disconnected_cb(void_cb cb);
+
+/** @brief Reset all colors on keyboard to the original colors. 
+
+This function will restore all the colours to the colours that were originally on the keyboard. This function
+should be called when you close the application.
+
+@ingroup API
+
+@returns
+None.
+*/
+WOOTINGRGBCONTROL_API bool wooting_rgb_reset(void);
+
+/** @brief Directly set and update 1 key on the keyboard.
+
+This function will directly change the color of 1 key on the keyboard. This will not influence the keyboard color array.
+
+Use this function for simple applifications, like a notification. Use the array functions if you want to change the entire keyboard.
+
+@ingroup API
+@param row The horizontal index of the key
+@param coloum The vertical index of the key
+@param red A 0-255 value of the red color
+@param green A 0-255 value of the green color
+@param blue A 0-255 value of the blue color
+
+@returns
+This functions return true (1) if the colour is set.
+*/
+WOOTINGRGBCONTROL_API bool wooting_rgb_direct_set_key(uint8_t row, uint8_t column, uint8_t red, uint8_t green, uint8_t blue);
+
+/** @brief Directly reset 1 key on the keyboard to the original color.
+
+This function will directly reset the color of 1 key on the keyboard. This will not influence the keyboard color array.
+
+Use this function for simple applifications, like a notification. Use the array functions if you want to change the entire keyboard.
+
+@ingroup API
+@param row The horizontal index of the key
+@param coloum The vertical index of the key
+
+@returns
+This functions return true (1) if the colour is reset.
+*/
+WOOTINGRGBCONTROL_API bool wooting_rgb_direct_reset_key(uint8_t row, uint8_t column);
+
+/** @brief Send the colors from the color array to the keyboard.
+
+This function will send the changes made with the wooting_rgb_array_**_** functions to the keyboard.
+
+@ingroup API
+
+@returns
+This functions return true (1) if the colours are updated.
+*/
+WOOTINGRGBCONTROL_API bool wooting_rgb_array_update_keyboard(void);
+
+/** @brief Change the auto update flag for the wooting_rgb_array_**_** functions.
+
+This function can be used to set a auto update trigger after every change with a wooting_rgb_array_**_** function.
+
+Standard is set to false.
+
+@ingroup API
+@param auto_update Change the auto update flag
+
+@returns
+None.
+*/
+WOOTINGRGBCONTROL_API void wooting_rgb_array_auto_update(bool auto_update);
+
+/** @brief Set a single color in the colour array.
+
+This function will set a single color in the colour array. This will not directly update the keyboard (unless the flag is set), so
+it can be called frequently. For example in a loop that updates the entire keyboard, if you don't want to send a C array from a different 
+programming language.
+
+@ingroup API
+@param row The horizontal index of the key
+@param coloum The vertical index of the key
+@param red A 0-255 value of the red color
+@param green A 0-255 value of the green color
+@param blue A 0-255 value of the blue color
+
+@returns
+This functions return true (1) if the colours are changed (optional: updated).
+*/
+WOOTINGRGBCONTROL_API bool wooting_rgb_array_set_single(uint8_t row, uint8_t column, uint8_t red, uint8_t green, uint8_t blue);
+
+/** @brief Set a full colour array.
+
+This function will set a complete color array. This will not directly update the keyboard (unless the flag is set). 
+
+Use our online tool to generate a color array:
+
+If you use a non-C language it is recommended to use the wooting_rgb_array_set_single function to change the colors to avoid compatibility issues.
+
+@ingroup API
+@param colors_buffer Pointer to a buffer of a full color array
+
+@returns
+This functions return true (1) if the colours are changed (optional: updated).
+*/
+WOOTINGRGBCONTROL_API bool wooting_rgb_array_set_full(uint8_t *colors_buffer);

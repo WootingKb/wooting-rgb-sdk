@@ -1,0 +1,17 @@
+
+\.vs/
+
+windows/\.vs/wooting-analog-reader/v14/\.suo
+
+windows/Release/
+windows/Backup/
+windows/Debug/
+windows/x64/
+
+*.htm
+
+*.db
+
+*.opendb
+
+*.filters
