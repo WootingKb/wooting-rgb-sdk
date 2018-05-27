@@ -310,10 +310,10 @@ bool wooting_rgb_array_update_keyboard() {
 				rgb_buffer2[buffer_index + 0x20] = wooting_rgb_array[row][col][2];
 
 				if (led_index == LED_ENTER_ANSI) {
-					uint8_t iso_enter_index = pwm_mem_map[LED_ENTER_ISO];
-					rgb_buffer0[iso_enter_index] = rgb_buffer2[buffer_index];
-					rgb_buffer0[iso_enter_index + 0x10] = rgb_buffer2[buffer_index + 0x10];
-					rgb_buffer0[iso_enter_index + 0x20] = rgb_buffer2[buffer_index + 0x20];
+					uint8_t iso_enter_index = pwm_mem_map[LED_ENTER_ISO-48];
+					rgb_buffer2[iso_enter_index] = rgb_buffer2[buffer_index];
+					rgb_buffer2[iso_enter_index + 0x10] = rgb_buffer2[buffer_index + 0x10];
+					rgb_buffer2[iso_enter_index + 0x20] = rgb_buffer2[buffer_index + 0x20];
 				}
 			}
 			else if (led_index >= 24) {
