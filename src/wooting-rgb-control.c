@@ -4,6 +4,10 @@
 #include "wooting-rgb-control.h"
 
 #define NOLED 50
+#define LED_LEFT_SHIFT_ANSI 9
+#define LED_LEFT_SHIFT_ISO 7
+#define LED_ENTER_ANSI 65
+#define LED_ENTER_ISO 62
 
 #define RGB_RAW_BUFFER_SIZE 96
 #define WOOTING_COMMAND_SIZE 8
@@ -31,33 +35,33 @@ static bool wooting_rgb_auto_update = false;
 
 static uint8_t wooting_rgb_array[WOOTING_RGB_ROWS][WOOTING_RGB_COLS][3] = {
 	{
-		{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 }
+		{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 }
 	},
 	{
-		{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 }
+		{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 }
 	},
 	{
-		{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 }
+		{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 }
 	},
 	{
-		{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 }
+		{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 }
 	},
 	{
-		{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 }
+		{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 }
 	},
 	{
-		{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 }
+		{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 },{ 0, 255, 255 }
 	}
 };
 
 static uint8_t get_safe_led_idex(uint8_t row, uint8_t column) {
-	static uint8_t rgb_led_index[6][22] = {
-		{ NOLED, 0, NOLED, 11, 12, 23, 24, 36, 47, 85, 84, 49, 48, 59, 61, 73, 81, 80, 113, 114, 115, 116 },
-		{ NOLED, 2, 1, 14, 13, 26, 25, 35, 38, 37, 87, 86, 95, 51, 63, 75, 72, 74, 96, 97, 98, 99 },
-		{ NOLED, 3, 4, 15, 16, 27, 28, 39, 42, 40, 88, 89, 52, 53, 71, 76, 83, 77, 102, 103, 104, 100 },
-		{ NOLED, 5, 6, 17, 18, 29, 30, 41, 46, 44, 90, 93, 54, NOLED, 65, NOLED, NOLED, NOLED, 105, 106, 107, NOLED },
-		{ NOLED, 9, NOLED, 19, 20, 31, 34, 32, 45, 43, 91, 92, 55, NOLED, 66, NOLED, 78, NOLED, 108, 109, 110, 101 },
-		{ NOLED, 10, 22, 21, NOLED, NOLED, NOLED, 33, NOLED, NOLED, NOLED, 94, 58, 67, 68, 70, 79, 82, NOLED, 111, 112, NOLED }
+	static uint8_t rgb_led_index[WOOTING_RGB_ROWS][WOOTING_RGB_COLS] = {
+		{ 0, NOLED, 11, 12, 23, 24, 36, 47, 85, 84, 49, 48, 59, 61, 73, 81, 80, 113, 114, 115, 116 },
+		{ 2, 1, 14, 13, 26, 25, 35, 38, 37, 87, 86, 95, 51, 63, 75, 72, 74, 96, 97, 98, 99 },
+		{ 3, 4, 15, 16, 27, 28, 39, 42, 40, 88, 89, 52, 53, 71, 76, 83, 77, 102, 103, 104, 100 },
+		{ 5, 6, 17, 18, 29, 30, 41, 46, 44, 90, 93, 54, 57, 65, NOLED, NOLED, NOLED, 105, 106, 107, NOLED },
+		{ 9, 8, 19, 20, 31, 34, 32, 45, 43, 91, 92, 55, NOLED, 66, NOLED, 78, NOLED, 108, 109, 110, 101 },
+		{ 10, 22, 21, NOLED, NOLED, NOLED, 33, NOLED, NOLED, NOLED, 94, 58, 67, 68, 70, 79, 82, NOLED, 111, 112, NOLED }
 	};
 
 	if (row < WOOTING_RGB_ROWS && column < WOOTING_RGB_COLS) {
@@ -227,12 +231,48 @@ bool wooting_rgb_reset() {
 
 bool wooting_rgb_direct_set_key(uint8_t row, uint8_t column, uint8_t red, uint8_t green, uint8_t blue) {
 	uint8_t keyCode = get_safe_led_idex(row, column);
-	return wooting_rgb_send_feature(WOOTING_SINGLE_COLOR_COMMAND, keyCode, red, green, blue);
+
+	if (keyCode == NOLED) {
+		return false;
+	}
+	else if (keyCode == LED_LEFT_SHIFT_ANSI) {
+		bool update_ansi = wooting_rgb_send_feature(WOOTING_SINGLE_COLOR_COMMAND, LED_LEFT_SHIFT_ANSI, red, green, blue);
+		bool update_iso = wooting_rgb_send_feature(WOOTING_SINGLE_COLOR_COMMAND, LED_LEFT_SHIFT_ISO, red, green, blue);
+
+		return update_ansi && update_iso;
+	}
+	else if (keyCode == LED_ENTER_ANSI) {
+		bool update_ansi = wooting_rgb_send_feature(WOOTING_SINGLE_COLOR_COMMAND, LED_ENTER_ANSI, red, green, blue);
+		bool update_iso = wooting_rgb_send_feature(WOOTING_SINGLE_COLOR_COMMAND, LED_ENTER_ISO, red, green, blue);
+
+		return update_ansi && update_iso;
+	}
+	else {
+		return wooting_rgb_send_feature(WOOTING_SINGLE_COLOR_COMMAND, keyCode, red, green, blue);
+	}
 }
 
 bool wooting_rgb_direct_reset_key(uint8_t row, uint8_t column) {
 	uint8_t keyCode = get_safe_led_idex(row, column);
-	return wooting_rgb_send_feature(WOOTING_RESET_COLOR_COMMAND, 0, 0, 0, keyCode);
+
+	if (keyCode == NOLED) {
+		return true;
+	}
+	else if (keyCode == LED_LEFT_SHIFT_ANSI) {
+		bool update_ansi = wooting_rgb_send_feature(WOOTING_RESET_COLOR_COMMAND, 0, 0, 0, LED_LEFT_SHIFT_ANSI);
+		bool update_iso = wooting_rgb_send_feature(WOOTING_RESET_COLOR_COMMAND, 0, 0, 0, LED_LEFT_SHIFT_ISO);
+
+		return update_ansi && update_iso;
+	}
+	else if (keyCode == LED_ENTER_ANSI) {
+		bool update_ansi = wooting_rgb_send_feature(WOOTING_RESET_COLOR_COMMAND, 0, 0, 0, LED_ENTER_ANSI);
+		bool update_iso = wooting_rgb_send_feature(WOOTING_RESET_COLOR_COMMAND, 0, 0, 0, LED_ENTER_ISO);
+
+		return update_ansi && update_iso;
+	}
+	else {
+		return wooting_rgb_send_feature(WOOTING_RESET_COLOR_COMMAND, 0, 0, 0, keyCode);
+	}
 }
 
 bool wooting_rgb_array_update_keyboard() {
@@ -268,6 +308,13 @@ bool wooting_rgb_array_update_keyboard() {
 				rgb_buffer2[buffer_index] = wooting_rgb_array[row][col][0];
 				rgb_buffer2[buffer_index + 0x10] = wooting_rgb_array[row][col][1];
 				rgb_buffer2[buffer_index + 0x20] = wooting_rgb_array[row][col][2];
+
+				if (led_index == LED_ENTER_ANSI) {
+					uint8_t iso_enter_index = pwm_mem_map[LED_ENTER_ISO];
+					rgb_buffer0[iso_enter_index] = rgb_buffer2[buffer_index];
+					rgb_buffer0[iso_enter_index + 0x10] = rgb_buffer2[buffer_index + 0x10];
+					rgb_buffer0[iso_enter_index + 0x20] = rgb_buffer2[buffer_index + 0x20];
+				}
 			}
 			else if (led_index >= 24) {
 				uint8_t buffer_index = pwm_mem_map[led_index - 24];
@@ -280,6 +327,13 @@ bool wooting_rgb_array_update_keyboard() {
 				rgb_buffer0[buffer_index] = wooting_rgb_array[row][col][0];
 				rgb_buffer0[buffer_index + 0x10] = wooting_rgb_array[row][col][1];
 				rgb_buffer0[buffer_index + 0x20] = wooting_rgb_array[row][col][2];
+
+				if (led_index == LED_LEFT_SHIFT_ANSI) {
+					uint8_t iso_shift_index = pwm_mem_map[LED_LEFT_SHIFT_ISO];
+					rgb_buffer0[iso_shift_index] = rgb_buffer0[buffer_index];
+					rgb_buffer0[iso_shift_index + 0x10] = rgb_buffer0[buffer_index + 0x10];
+					rgb_buffer0[iso_shift_index + 0x20] = rgb_buffer0[buffer_index + 0x20];
+				}
 			}
 		}
 	}

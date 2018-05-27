@@ -12,7 +12,7 @@
 typedef void(*void_cb)(void);
 
 #define WOOTING_RGB_ROWS 6
-#define WOOTING_RGB_COLS 22
+#define WOOTING_RGB_COLS 21
 
 /** @brief Check if keyboard connected.
 
