@@ -123,6 +123,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Setupapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -141,18 +142,16 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Setupapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\hidapi\hidapi\hidapi.h" />
     <ClInclude Include="..\src\wooting-rgb-control.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\hidapi\windows\hid.c" />
     <ClCompile Include="..\src\wooting-rgb-control.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\hidapi\windows\hidapi.vcxproj">
-      <Project>{a107c21c-418a-4697-bb10-20c3aa60e2e4}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
