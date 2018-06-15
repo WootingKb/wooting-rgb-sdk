@@ -19,7 +19,9 @@
 
 #define WOOTING_RAW_COLORS_REPORT 11
 #define WOOTING_SINGLE_COLOR_COMMAND 30
-#define WOOTING_RESET_COLOR_COMMAND 31
+#define WOOTING_SINGLE_RESET_COMMAND 31
+#define WOOTING_RESET_ALL_COMMAND 32
+#define WOOTING_COLOR_INIT_COMMAND 33
 
 typedef enum RGB_PARTS {
 	PART0,
@@ -32,6 +34,13 @@ typedef enum RGB_PARTS {
 static hid_device* keyboard_handle = NULL;
 static void_cb disconnected_callback = NULL;
 static bool wooting_rgb_auto_update = false;
+
+static uint8_t get_safe_led_idex(uint8_t row, uint8_t column);
+static uint16_t getCrc16ccitt(const uint8_t* buffer, uint16_t size);
+static void wooting_keyboard_disconnected();
+static bool wooting_find_keyboard();
+static bool wooting_send_buffer(RGB_PARTS part_number, uint8_t rgb_buffer[]);
+static bool wooting_rgb_send_feature(uint8_t commandId, uint8_t parameter0, uint8_t parameter1, uint8_t parameter2, uint8_t parameter3);
 
 static uint8_t wooting_rgb_array[WOOTING_RGB_ROWS][WOOTING_RGB_COLS][3] = {
 	{
@@ -100,7 +109,7 @@ static void wooting_keyboard_disconnected() {
 	}
 }
 
-static bool wooting_check_keyboard() {
+static bool wooting_find_keyboard() {
 	if (keyboard_handle) {
 		return true;
 	}
@@ -113,12 +122,18 @@ static bool wooting_check_keyboard() {
 
 		// Loop through linked list of hid_info untill the analog interface is found
 		while (hid_info) {
-			if (hid_info->usage_page == WOOTING_ONE_CONFIG_USAGE_PAGE) {
-				keyboard_handle = hid_open_path(hid_info->path);
-				return true;
-			}
-			else {
+			if (hid_info->usage_page != WOOTING_ONE_CONFIG_USAGE_PAGE) {
 				hid_info = hid_info->next;
+			} else {
+				keyboard_handle = hid_open_path(hid_info->path);
+
+				// Once the keyboard is found send an init command and abuse two reads to make a 50 ms delay to make sure the keyboard is ready
+				wooting_rgb_send_feature(WOOTING_COLOR_INIT_COMMAND, 0, 0, 0, 0);
+				unsigned char *stub = NULL;
+				hid_read(keyboard_handle, stub, 0);
+				hid_read_timeout(keyboard_handle, stub, 0, 50);
+
+				return true;
 			}
 		}
 
@@ -128,40 +143,40 @@ static bool wooting_check_keyboard() {
 }
 
 static bool wooting_send_buffer(RGB_PARTS part_number, uint8_t rgb_buffer[]) {
-	if (!wooting_check_keyboard()) {
+	if (!wooting_find_keyboard()) {
 		return false;
 	}
 
-	uint8_t rgbBuffer[WOOTING_REPORT_SIZE] = { 0 };
+	uint8_t report_buffer[WOOTING_REPORT_SIZE] = { 0 };
 
-	rgbBuffer[0] = 0; // HID report index(unused)
-	rgbBuffer[1] = 0xD0; // Magicword
-	rgbBuffer[2] = 0xDA; // Magicword
-	rgbBuffer[3] = WOOTING_RAW_COLORS_REPORT; // Magicword
+	report_buffer[0] = 0; // HID report index (unused)
+	report_buffer[1] = 0xD0; // Magicword
+	report_buffer[2] = 0xDA; // Magicword
+	report_buffer[3] = WOOTING_RAW_COLORS_REPORT; // Report ID
 	switch (part_number) {
 		case PART0: {
-			rgbBuffer[4] = 0; // Slave nr
-			rgbBuffer[5] = 0; // Reg start address
+			report_buffer[4] = 0; // Slave nr
+			report_buffer[5] = 0; // Reg start address
 			break;
 		}
 		case PART1: {
-			rgbBuffer[4] = 0; // Slave nr
-			rgbBuffer[5] = RGB_RAW_BUFFER_SIZE; // Reg start address
+			report_buffer[4] = 0; // Slave nr
+			report_buffer[5] = RGB_RAW_BUFFER_SIZE; // Reg start address
 			break;
 		}
 		case PART2: {
-			rgbBuffer[4] = 1; // Slave nr
-			rgbBuffer[5] = 0; // Reg start address
+			report_buffer[4] = 1; // Slave nr
+			report_buffer[5] = 0; // Reg start address
 			break;
 		}
 		case PART3: {
-			rgbBuffer[4] = 1; // Slave nr
-			rgbBuffer[5] = RGB_RAW_BUFFER_SIZE; // Reg start address
+			report_buffer[4] = 1; // Slave nr
+			report_buffer[5] = RGB_RAW_BUFFER_SIZE; // Reg start address
 			break;
 		}
 		case PART4: {
-			rgbBuffer[4] = 2; // Slave nr
-			rgbBuffer[5] = 0; // Reg start address
+			report_buffer[4] = 2; // Slave nr
+			report_buffer[5] = 0; // Reg start address
 			break;
 		}
 		default: {
@@ -169,14 +184,13 @@ static bool wooting_send_buffer(RGB_PARTS part_number, uint8_t rgb_buffer[]) {
 		}
 	}
 
-	memcpy(&rgbBuffer[6], rgb_buffer, RGB_RAW_BUFFER_SIZE);
+	memcpy(&report_buffer[6], rgb_buffer, RGB_RAW_BUFFER_SIZE);
 
-	uint16_t crc = getCrc16ccitt((uint8_t*)&rgbBuffer, WOOTING_REPORT_SIZE - 2);
+	uint16_t crc = getCrc16ccitt((uint8_t*)&report_buffer, WOOTING_REPORT_SIZE - 2);
+	report_buffer[127] = (uint8_t)crc;
+	report_buffer[128] = crc >> 8;
 
-	rgbBuffer[127] = (uint8_t)crc;
-	rgbBuffer[128] = crc >> 8;
-
-	if (hid_write(keyboard_handle, rgbBuffer, WOOTING_REPORT_SIZE) == WOOTING_REPORT_SIZE) {
+	if (hid_write(keyboard_handle, report_buffer, WOOTING_REPORT_SIZE) == WOOTING_REPORT_SIZE) {
 		return true;
 	} else {
 		wooting_keyboard_disconnected();
@@ -185,11 +199,11 @@ static bool wooting_send_buffer(RGB_PARTS part_number, uint8_t rgb_buffer[]) {
 }
 
 static bool wooting_rgb_send_feature(uint8_t commandId, uint8_t parameter0, uint8_t parameter1, uint8_t parameter2, uint8_t parameter3) {
-	if (!wooting_check_keyboard()) {
+	if (!wooting_find_keyboard()) {
 		return false;
 	}
 
-	unsigned char report_buffer[WOOTING_COMMAND_SIZE];
+	uint8_t report_buffer[WOOTING_COMMAND_SIZE];
 
 	report_buffer[0] = 0;
 	report_buffer[1] = 0xD0;
@@ -218,15 +232,7 @@ void wooting_rgb_set_disconnected_cb(void_cb cb) {
 }
 
 bool wooting_rgb_reset() {
-	for (int row = 0; row < WOOTING_RGB_ROWS; row++) {
-		for (int col = 0; col < WOOTING_RGB_COLS; col++) {
-			if (!wooting_rgb_direct_reset_key(row, col)) {
-				return false;
-			}
-		}
-	}
-
-	return true;
+	return wooting_rgb_send_feature(WOOTING_RESET_ALL_COMMAND, 0, 0, 0, 0);
 }
 
 bool wooting_rgb_direct_set_key(uint8_t row, uint8_t column, uint8_t red, uint8_t green, uint8_t blue) {
@@ -259,19 +265,19 @@ bool wooting_rgb_direct_reset_key(uint8_t row, uint8_t column) {
 		return true;
 	}
 	else if (keyCode == LED_LEFT_SHIFT_ANSI) {
-		bool update_ansi = wooting_rgb_send_feature(WOOTING_RESET_COLOR_COMMAND, 0, 0, 0, LED_LEFT_SHIFT_ANSI);
-		bool update_iso = wooting_rgb_send_feature(WOOTING_RESET_COLOR_COMMAND, 0, 0, 0, LED_LEFT_SHIFT_ISO);
+		bool update_ansi = wooting_rgb_send_feature(WOOTING_SINGLE_RESET_COMMAND, 0, 0, 0, LED_LEFT_SHIFT_ANSI);
+		bool update_iso = wooting_rgb_send_feature(WOOTING_SINGLE_RESET_COMMAND, 0, 0, 0, LED_LEFT_SHIFT_ISO);
 
 		return update_ansi && update_iso;
 	}
 	else if (keyCode == LED_ENTER_ANSI) {
-		bool update_ansi = wooting_rgb_send_feature(WOOTING_RESET_COLOR_COMMAND, 0, 0, 0, LED_ENTER_ANSI);
-		bool update_iso = wooting_rgb_send_feature(WOOTING_RESET_COLOR_COMMAND, 0, 0, 0, LED_ENTER_ISO);
+		bool update_ansi = wooting_rgb_send_feature(WOOTING_SINGLE_RESET_COMMAND, 0, 0, 0, LED_ENTER_ANSI);
+		bool update_iso = wooting_rgb_send_feature(WOOTING_SINGLE_RESET_COMMAND, 0, 0, 0, LED_ENTER_ISO);
 
 		return update_ansi && update_iso;
 	}
 	else {
-		return wooting_rgb_send_feature(WOOTING_RESET_COLOR_COMMAND, 0, 0, 0, keyCode);
+		return wooting_rgb_send_feature(WOOTING_SINGLE_RESET_COMMAND, 0, 0, 0, keyCode);
 	}
 }
 
