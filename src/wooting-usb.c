@@ -66,20 +66,22 @@ bool wooting_usb_find_keyboard() {
 	// Loop through linked list of hid_info untill the analog interface is found
 	struct hid_device_info* hid_info_walker = hid_info;
 	while (hid_info_walker) {
-		if (hid_info_walker->usage_page != WOOTING_ONE_CONFIG_USAGE_PAGE) {
-			hid_info_walker = hid_info->next;
-		}
-		else {
+		if (hid_info_walker->usage_page == WOOTING_ONE_CONFIG_USAGE_PAGE) {
 			keyboard_handle = hid_open_path(hid_info_walker->path);
 
-			// Once the keyboard is found send an init command and abuse two reads to make a 50 ms delay to make sure the keyboard is ready
-			wooting_usb_send_feature(WOOTING_COLOR_INIT_COMMAND, 0, 0, 0, 0);
-			unsigned char stub = 0;
-			hid_read(keyboard_handle, &stub, 0);
-			hid_read_timeout(keyboard_handle, &stub, 0, 50);
+			if (keyboard_handle) {
+				// Once the keyboard is found send an init command and abuse two reads to make a 50 ms delay to make sure the keyboard is ready
+				wooting_usb_send_feature(WOOTING_COLOR_INIT_COMMAND, 0, 0, 0, 0);
+				unsigned char stub = 0;
+				hid_read(keyboard_handle, &stub, 0);
+				hid_read_timeout(keyboard_handle, &stub, 0, 50);
 
-			keyboard_found = true;
+				keyboard_found = true;
+			}
+			break;
 		}
+	
+		hid_info_walker = hid_info_walker->next;
 	}
 
 	hid_free_enumeration(hid_info);
