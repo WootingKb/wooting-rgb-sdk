@@ -15,3 +15,6 @@ windows/x64/
 *.opendb
 
 *.filters
+
+src/*.o
+linux/*.so

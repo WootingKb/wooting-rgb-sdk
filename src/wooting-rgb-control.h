@@ -1,9 +1,14 @@
 #pragma once
 
+#ifdef _WIN32
 #ifdef WOOTINGRGBCONTROL_EXPORTS  
 #define WOOTINGRGBCONTROL_API __declspec(dllexport)   
 #else  
 #define WOOTINGRGBCONTROL_API __declspec(dllimport)   
+#endif
+#else
+// __declspec is win32 only
+#define WOOTINGRGBCONTROL_API
 #endif
 
 #include "stdint.h"
