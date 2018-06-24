@@ -141,4 +141,4 @@ If you use a non-C language it is recommended to use the wooting_rgb_array_set_s
 @returns
 This functions return true (1) if the colours are changed (optional: updated).
 */
-WOOTINGRGBCONTROL_API bool wooting_rgb_array_set_full(uint8_t *colors_buffer);
+WOOTINGRGBCONTROL_API bool wooting_rgb_array_set_full(const uint8_t *colors_buffer);

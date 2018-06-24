@@ -148,10 +148,12 @@
   <ItemGroup>
     <ClInclude Include="..\hidapi\hidapi\hidapi.h" />
     <ClInclude Include="..\src\wooting-rgb-control.h" />
+    <ClInclude Include="..\src\wooting-usb.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\hidapi\windows\hid.c" />
     <ClCompile Include="..\src\wooting-rgb-control.c" />
+    <ClCompile Include="..\src\wooting-usb.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
