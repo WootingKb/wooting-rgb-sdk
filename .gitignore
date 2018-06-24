@@ -15,3 +15,5 @@ windows/x64/
 *.opendb
 
 *.filters
+
+*.user
