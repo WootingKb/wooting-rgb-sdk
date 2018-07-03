@@ -16,9 +16,9 @@ to-do
 ```
 git clone https://github.com/WootingKb/wooting-rgb-sdk.git 
 ```
-Open the visual studio project and select x64 (64-bit) or x86 (32-bit)/
+Open the visual studio project and select x64 (64-bit) or x86 (32-bit).
 
-Now hit the build and find your DLL in the folder depending on your configuration/
+Now hit the build and find your DLL in the folder depending on your configuration.
 
 64-bit
 ```
@@ -31,15 +31,15 @@ Now hit the build and find your DLL in the folder depending on your configuratio
 
 ## Example
 
-For examples check out the [wootdev website](https://dev.wooting.nl)
+For examples check out the [wootdev website](https://dev.wooting.nl).
 
 ## Keyboard Matrix
-Keyboard matrix with rows and columns
+Keyboard matrix with rows and columns:
 ![Keyboard Matrix Row Columns](resources/keyboard-matrix-rows-columns.png)
 
 ## License
 
-This project is licensed under the Apache License 2.0 License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the Apache License 2.0 License - see the [LICENSE.md](LICENSE.md) file for details.
 
 ## Acknowledgments
 
