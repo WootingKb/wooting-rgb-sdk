@@ -3,7 +3,7 @@ Customize RGB colors on your Wooting Keyboard for developers and hobbyists.
 
 ## Getting Started
 
-This project will allow you to build your own DLL and customize the source code. Looking to directly get started with the DLL? Check out the downloads and guides in our [developer portal](https://dev.wooting.nl)
+This project will allow you to build your own DLL and customize the source code. Looking to directly get started with the DLL? Check out the downloads and guides in our [developer portal](https://dev.wooting.nl).
 
 ### Prerequisites
 
@@ -16,9 +16,9 @@ to-do
 ```
 git clone https://github.com/WootingKb/wooting-rgb-sdk.git 
 ```
-Open the visual studio project and select x64 (64-bit) or x86 (32-bit)
+Open the visual studio project and select x64 (64-bit) or x86 (32-bit)/
 
-Now hit the build and find your DLL in the folder depending on your configuration
+Now hit the build and find your DLL in the folder depending on your configuration/
 
 64-bit
 ```
