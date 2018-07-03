@@ -1,3 +1,19 @@
+/*
+Copyright 2018 Wooting Technologies B.V.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http ://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+-
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 #include "stdbool.h"
 #include "stdint.h"
 #include "wooting-usb.h"
@@ -80,7 +96,7 @@ bool wooting_rgb_direct_reset_key(uint8_t row, uint8_t column) {
 	uint8_t keyCode = get_safe_led_idex(row, column);
 
 	if (keyCode == NOLED) {
-		return true;
+		return false;
 	}
 	else if (keyCode == LED_LEFT_SHIFT_ANSI) {
 		bool update_ansi = wooting_usb_send_feature(WOOTING_SINGLE_RESET_COMMAND, 0, 0, 0, LED_LEFT_SHIFT_ANSI);
