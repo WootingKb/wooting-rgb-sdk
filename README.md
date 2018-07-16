@@ -14,7 +14,7 @@ to-do
 
 ### Installing
 ```
-git clone https://github.com/WootingKb/wooting-rgb-sdk.git 
+git clone --recursive https://github.com/WootingKb/wooting-rgb-sdk.git 
 ```
 Open the visual studio project and select x64 (64-bit) or x86 (32-bit).
 
