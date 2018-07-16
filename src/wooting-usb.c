@@ -23,7 +23,6 @@ limitations under the License.
 #define WOOTING_REPORT_SIZE 129
 #define WOOTING_ONE_VID 0x03EB
 #define WOOTING_ONE_PID 0xFF01
-#define WOOTING_ONE_CONFIG_USAGE_PAGE 0x1337
 
 static uint16_t getCrc16ccitt(const uint8_t* buffer, uint16_t size);
 
@@ -79,10 +78,23 @@ bool wooting_usb_find_keyboard() {
 
 	bool keyboard_found = false;
 
-	// Loop through linked list of hid_info untill the analog interface is found
+	// The amount of interfaces is variable, so we need to look for the configuration interface
+	// In the Wooting one keyboard the configuration interface is always 4 lower than the highest number
 	struct hid_device_info* hid_info_walker = hid_info;
+	uint8_t highestInterfaceNr = 0;
 	while (hid_info_walker) {
-		if (hid_info_walker->usage_page == WOOTING_ONE_CONFIG_USAGE_PAGE) {
+		if (hid_info_walker->interface_number > highestInterfaceNr) {
+			highestInterfaceNr = hid_info_walker->interface_number;
+		}
+		hid_info_walker = hid_info_walker->next;
+	}
+
+	uint8_t interfaceNr = highestInterfaceNr - 4;
+
+	// Reset walker and look for the interface number
+	hid_info_walker = hid_info;
+	while (hid_info_walker) {
+		if (hid_info_walker->interface_number == interfaceNr) {
 			keyboard_handle = hid_open_path(hid_info_walker->path);
 
 			if (keyboard_handle) {
