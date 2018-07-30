@@ -40,11 +40,11 @@ static uint16_t getCrc16ccitt(const uint8_t* buffer, uint16_t size)
 	return crc;
 }
 
-static void wooting_usb_disconnected() {
+void wooting_usb_disconnect(bool trigger_cb) {
 	hid_close(keyboard_handle);
 	keyboard_handle = NULL;
 
-	if (disconnected_callback) {
+	if (trigger_cb && disconnected_callback) {
 		disconnected_callback();
 	}
 }
@@ -159,7 +159,7 @@ bool wooting_usb_send_buffer(RGB_PARTS part_number, uint8_t rgb_buffer[]) {
 		return true;
 	}
 	else {
-		wooting_usb_disconnected();
+		wooting_usb_disconnect(true);
 		return false;
 	}
 }
@@ -184,7 +184,7 @@ bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0, uint8_t par
 		return true;
 	}
 	else {
-		wooting_usb_disconnected();
+		wooting_usb_disconnect(true);
 		return false;
 	}
 }
