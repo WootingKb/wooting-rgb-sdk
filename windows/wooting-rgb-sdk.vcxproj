@@ -75,12 +75,14 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <TargetName>$(ProjectName)64</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>$(ProjectName)64</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -154,11 +156,15 @@
     <ClInclude Include="..\hidapi\hidapi\hidapi.h" />
     <ClInclude Include="..\src\wooting-rgb-sdk.h" />
     <ClInclude Include="..\src\wooting-usb.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\hidapi\windows\hid.c" />
     <ClCompile Include="..\src\wooting-rgb-sdk.c" />
     <ClCompile Include="..\src\wooting-usb.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="wooting-rgb-sdk.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
