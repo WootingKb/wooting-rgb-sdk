@@ -57,7 +57,12 @@ void wooting_rgb_set_disconnected_cb(void_cb cb) {
 }
 
 bool wooting_rgb_reset() {
-	return wooting_usb_send_feature(WOOTING_RESET_ALL_COMMAND, 0, 0, 0, 0);
+	if (wooting_usb_send_feature(WOOTING_RESET_ALL_COMMAND, 0, 0, 0, 0)) {
+		wooting_usb_disconnect(false);
+	}
+	else {
+		return false;
+	}
 }
 
 bool wooting_rgb_direct_set_key(uint8_t row, uint8_t column, uint8_t red, uint8_t green, uint8_t blue) {
