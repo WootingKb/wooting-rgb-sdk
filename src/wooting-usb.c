@@ -7,6 +7,7 @@
 */
 #include "stdint.h"
 #include "stdbool.h"
+#include "string.h"
 #include "wooting-usb.h"
 #include "hidapi.h"
 
