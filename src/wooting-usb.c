@@ -12,8 +12,9 @@
 
 #define WOOTING_COMMAND_SIZE 8
 #define WOOTING_REPORT_SIZE 129
-#define WOOTING_ONE_VID 0x03EB
+#define WOOTING_VID 0x03EB
 #define WOOTING_ONE_PID 0xFF01
+#define WOOTING_TWO_PID 0xFF02
 
 static uint16_t getCrc16ccitt(const uint8_t* buffer, uint16_t size);
 
@@ -61,7 +62,7 @@ bool wooting_usb_find_keyboard() {
 		return hid_read_timeout(keyboard_handle, &stub, 0, 0) != -1;
 	}
 	
-	struct hid_device_info* hid_info = hid_enumerate(WOOTING_ONE_VID, WOOTING_ONE_PID);
+	struct hid_device_info* hid_info = hid_enumerate(WOOTING_VID, WOOTING_ONE_PID) ? hid_enumerate(WOOTING_VID, WOOTING_ONE_PID) : hid_enumerate(WOOTING_VID, WOOTING_TWO_PID);
 
 	if (hid_info == NULL) {
 		return false;
