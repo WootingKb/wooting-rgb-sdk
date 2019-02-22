@@ -24,11 +24,13 @@ static uint8_t rgb_buffer0[RGB_RAW_BUFFER_SIZE] = { 0 };
 static uint8_t rgb_buffer1[RGB_RAW_BUFFER_SIZE] = { 0 };
 static uint8_t rgb_buffer2[RGB_RAW_BUFFER_SIZE] = { 0 };
 static uint8_t rgb_buffer3[RGB_RAW_BUFFER_SIZE] = { 0 };
+static uint8_t rgb_buffer4[RGB_RAW_BUFFER_SIZE] = { 0 };
 
 static bool rgb_buffer0_changed = false;
 static bool rgb_buffer1_changed = false;
 static bool rgb_buffer2_changed = false;
 static bool rgb_buffer3_changed = false;
+static bool rgb_buffer4_changed = false;
 
 // Converts the array index to a memory location in the RGB buffers
 static uint8_t get_safe_led_idex(uint8_t row, uint8_t column) {
@@ -144,6 +146,13 @@ bool wooting_rgb_array_update_keyboard() {
 		rgb_buffer3_changed = false;
 	}
 
+	if (rgb_buffer4_changed) {
+		if (!wooting_usb_send_buffer(PART4, rgb_buffer4)) {
+			return false;
+		}
+		rgb_buffer4_changed = false;
+	}
+
 	return true;
 }
 
@@ -158,10 +167,14 @@ static bool wooting_rgb_array_change_single(uint8_t row, uint8_t column, uint8_t
 	uint8_t led_index = get_safe_led_idex(row, column);
 	uint8_t *buffer_pointer;
 
-	if (led_index >= 96) {
+	if (led_index >= 117) {
 		return false;
 	}
-	if (led_index >= 72) {
+	if (led_index >= 96) {
+		buffer_pointer = rgb_buffer4;
+		rgb_buffer4_changed = true;
+	}
+	else if (led_index >= 72) {
 		buffer_pointer = rgb_buffer3;
 		rgb_buffer3_changed = true;
 	}
