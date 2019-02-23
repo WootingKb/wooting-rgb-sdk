@@ -149,7 +149,9 @@ bool wooting_usb_send_buffer(RGB_PARTS part_number, uint8_t rgb_buffer[]) {
 		break;
 	}
 	case PART4: {
-		if (is_wooting_one) break;
+		if (is_wooting_one) {
+			return true;
+		}
 		report_buffer[4] = 2; // Slave nr
 		report_buffer[5] = 0; // Reg start address
 		break;
