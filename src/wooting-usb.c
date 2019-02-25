@@ -56,6 +56,10 @@ void wooting_usb_set_disconnected_cb(void_cb cb) {
 	disconnected_callback = cb;
 }
 
+bool wooting_usb_is_wooting_one() {
+	return is_wooting_one;
+}
+
 bool wooting_usb_find_keyboard() {
 	if (keyboard_handle) {
 		// If keyboard is disconnected read will return -1
@@ -148,9 +152,10 @@ bool wooting_usb_send_buffer(RGB_PARTS part_number, uint8_t rgb_buffer[]) {
 		report_buffer[5] = RGB_RAW_BUFFER_SIZE; // Reg start address
 		break;
 	}
+	// wooting_rgb_array_update_keyboard will not run into this
 	case PART4: {
 		if (is_wooting_one) {
-			return true;
+			return false;
 		}
 		report_buffer[4] = 2; // Slave nr
 		report_buffer[5] = 0; // Reg start address
@@ -179,6 +184,12 @@ bool wooting_usb_send_buffer(RGB_PARTS part_number, uint8_t rgb_buffer[]) {
 bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0, uint8_t parameter1, uint8_t parameter2, uint8_t parameter3) {
 	if (!wooting_usb_find_keyboard()) {
 		return false;
+	}
+	uint8_t key_code_limit = wooting_usb_is_wooting_one() ? 95 : 116;
+	// prevent sending unnecessary data to the wootings if the index exceedes it's capabilities
+	if ((commandId == WOOTING_SINGLE_COLOR_COMMAND && parameter0 > key_code_limit) || (commandId == WOOTING_SINGLE_RESET_COMMAND && parameter3 > key_code_limit)) {
+		// this is not a usb error so let's return true. wooting_rgb_direct_set_key would also behave differently otherwise.
+		return true;
 	}
 
 	uint8_t report_buffer[WOOTING_COMMAND_SIZE];

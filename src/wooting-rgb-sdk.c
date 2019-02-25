@@ -146,6 +146,11 @@ bool wooting_rgb_array_update_keyboard() {
 		rgb_buffer3_changed = false;
 	}
 
+	// prevent assigning led's that don't exist
+	if (wooting_usb_is_wooting_one()) {
+		return true;
+	}
+
 	if (rgb_buffer4_changed) {
 		if (!wooting_usb_send_buffer(PART4, rgb_buffer4)) {
 			return false;
@@ -167,7 +172,8 @@ static bool wooting_rgb_array_change_single(uint8_t row, uint8_t column, uint8_t
 	uint8_t led_index = get_safe_led_idex(row, column);
 	uint8_t *buffer_pointer;
 
-	if (led_index >= 117) {
+	// prevent assigning led's that don't exist
+	if (led_index >= wooting_usb_is_wooting_one() ? 96 : 117) {
 		return false;
 	}
 	if (led_index >= 96) {
