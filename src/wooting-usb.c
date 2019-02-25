@@ -21,7 +21,9 @@ static uint16_t getCrc16ccitt(const uint8_t* buffer, uint16_t size);
 
 static void_cb disconnected_callback = NULL;
 static hid_device* keyboard_handle = NULL;
+
 static bool is_wooting_one = false;
+static uint8_t wooting_key_code_limit;
 
 static uint16_t getCrc16ccitt(const uint8_t* buffer, uint16_t size)
 {
@@ -60,6 +62,10 @@ bool wooting_usb_is_wooting_one() {
 	return is_wooting_one;
 }
 
+uint8_t get_wooting_key_code_limit() {
+	return wooting_key_code_limit;
+}
+
 bool wooting_usb_find_keyboard() {
 	if (keyboard_handle) {
 		// If keyboard is disconnected read will return -1
@@ -68,15 +74,17 @@ bool wooting_usb_find_keyboard() {
 		return hid_read_timeout(keyboard_handle, &stub, 0, 0) != -1;
 	}
 	
-	struct hid_device_info* hid_info = hid_enumerate(WOOTING_VID, WOOTING_ONE_PID);
-	is_wooting_one = true;
+	struct hid_device_info* hid_info;
 	
-	if (hid_info == NULL) {
-		hid_info = hid_enumerate(WOOTING_VID, WOOTING_TWO_PID);
-		is_wooting_one = false;
+	if ((hid_info = hid_enumerate(WOOTING_VID, WOOTING_ONE_PID)) != NULL) {
+		is_wooting_one = true;
+		wooting_key_code_limit = 95;
 	}
-
-	if (hid_info == NULL) {
+	else if ((hid_info = hid_enumerate(WOOTING_VID, WOOTING_TWO_PID)) != NULL) {
+		is_wooting_one = false;
+		wooting_key_code_limit = 116;
+	}
+	else {
 		return false;
 	}
 
@@ -185,9 +193,8 @@ bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0, uint8_t par
 	if (!wooting_usb_find_keyboard()) {
 		return false;
 	}
-	uint8_t key_code_limit = wooting_usb_is_wooting_one() ? 95 : 116;
 	// prevent sending unnecessary data to the wootings if the index exceedes it's capabilities
-	if ((commandId == WOOTING_SINGLE_COLOR_COMMAND && parameter0 > key_code_limit) || (commandId == WOOTING_SINGLE_RESET_COMMAND && parameter3 > key_code_limit)) {
+	if ((commandId == WOOTING_SINGLE_COLOR_COMMAND && parameter0 > wooting_key_code_limit) || (commandId == WOOTING_SINGLE_RESET_COMMAND && parameter3 > wooting_key_code_limit)) {
 		// this is not a usb error so let's return true. wooting_rgb_direct_set_key would also behave differently otherwise.
 		return true;
 	}
