@@ -78,11 +78,11 @@ bool wooting_usb_find_keyboard() {
 	
 	if ((hid_info = hid_enumerate(WOOTING_VID, WOOTING_ONE_PID)) != NULL) {
 		is_wooting_one = true;
-		wooting_key_code_limit = 95;
+		wooting_key_code_limit = WOOTING_ONE_KEY_CODE_LIMIT;
 	}
 	else if ((hid_info = hid_enumerate(WOOTING_VID, WOOTING_TWO_PID)) != NULL) {
 		is_wooting_one = false;
-		wooting_key_code_limit = 116;
+		wooting_key_code_limit = WOOTING_TWO_KEY_CODE_LIMIT;
 	}
 	else {
 		return false;
