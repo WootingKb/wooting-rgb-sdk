@@ -6,7 +6,7 @@ CFLAGS ?= -Wall -g -fPIC
 LDFLAGS ?= -Wall -g
 
 OBJS = ../src/wooting-rgb-sdk.o ../src/wooting-usb.o
-LIBS = `pkg-config libusb-1.0 --libs`
+LIBS = `pkg-config libusb-1.0 --libs` `pkg-config hidapi-libusb --libs`
 INCLUDES ?= `pkg-config hidapi-libusb --cflags` -I../src `pkg-config libusb-1.0 --cflags`
 
 libwooting-rgb-sdk.so: $(OBJS)
