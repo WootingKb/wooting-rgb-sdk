@@ -11,10 +11,15 @@
 extern "C" {
 #endif
 
+#ifdef _WIN32
 #ifdef WOOTINGRGBSDK_EXPORTS  
 #define WOOTINGRGBSDK_API __declspec(dllexport)   
 #else  
 #define WOOTINGRGBSDK_API __declspec(dllimport)   
+#endif
+#else
+// __declspec is win32 only
+#define WOOTINGRGBSDK_API
 #endif
 
 #include "stdint.h"

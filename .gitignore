@@ -19,3 +19,8 @@ windows/x64/
 *.user
 
 *.aps
+
+src/*.o
+linux/*.o
+linux/*.so
+
