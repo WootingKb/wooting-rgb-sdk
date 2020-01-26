@@ -29,6 +29,52 @@ typedef void(*void_cb)(void);
 
 #define WOOTING_RGB_ROWS 6
 #define WOOTING_RGB_COLS 21
+#define WOOTING_ONE_RGB_COLS 17
+#define WOOTING_TWO_RGB_COLS 21
+
+/** @brief Check if the Keyboard is a Wooting One.
+
+This function will tell you if the connected Keyboard is a Wooting One.
+
+@ingroup API
+
+@returns
+This function returns true (1) if a Wooting One is found.
+*/
+WOOTINGRGBSDK_API bool wooting_rgb_kbd_is_wooting_one(void);
+
+/** @brief Check if the Keyboard is a Wooting Two.
+
+This function will tell you if the connected Keyboard is a Wooting Two.
+
+@ingroup API
+
+@returns
+This function returns true (1) if a Wooting Two is found.
+*/
+WOOTINGRGBSDK_API bool wooting_rgb_kbd_is_wooting_two(void);
+
+/** @brief return the amount of RGB Columns.
+
+This function will return the amount of RGB Columns present on the connected Wooting.
+
+@ingroup API
+
+@returns
+This function returns the amount of RGB Columns (between 0 and 255).
+*/
+WOOTINGRGBSDK_API uint8_t wooting_rgb_cols(void);
+
+/** @brief return the amount of RGB Rows.
+
+This function will return the amount of RGB Rows present on the connected Wooting.
+
+@ingroup API
+
+@returns
+This function returns the amount of RGB Rows (between 0 and 255).
+*/
+WOOTINGRGBSDK_API uint8_t wooting_rgb_rows(void);
 
 /** @brief Check if keyboard connected.
 
@@ -149,7 +195,7 @@ This function will set a complete color array. This will not directly update the
 If you use a non-C language it is recommended to use the wooting_rgb_array_set_single function to change the colors to avoid compatibility issues.
 
 Buffer should be layout out as [Row0Col0Red, Row0Col0Green, Row0Col0Blue, Row0Col1Red, Row0Col1Green, Row0Col1Blue, ... Row5Row20Red, Row5Row20Green, Row5Row20Blue]. 
-Expected size is 6 row * 21 columns * 3 colors per key = 576 bytes.
+Expected size is 6 row * 21 columns * 3 colors per key = 378 bytes.
 
 @ingroup API
 @param colors_buffer Pointer to a buffer of a full color array 

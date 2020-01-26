@@ -17,7 +17,18 @@ typedef enum RGB_PARTS {
 	PART4
 } RGB_PARTS;
 
+typedef struct WOOTING_USB_META {
+	bool connected;
+	bool wooting_one;
+	bool wooting_two;
+} WOOTING_USB_META;
+
+extern WOOTING_USB_META wooting_usb_meta;
+
 #define RGB_RAW_BUFFER_SIZE 96
+
+#define WOOTING_ONE_KEY_CODE_LIMIT 95
+#define WOOTING_TWO_KEY_CODE_LIMIT 116
 
 #define WOOTING_RAW_COLORS_REPORT 11
 #define WOOTING_SINGLE_COLOR_COMMAND 30
@@ -27,6 +38,13 @@ typedef enum RGB_PARTS {
 
 void wooting_usb_set_disconnected_cb(void_cb cb);
 void wooting_usb_disconnect(bool trigger_cb);
-bool wooting_usb_find_keyboard();
+
+bool wooting_usb_is_wooting_one(void);
+bool wooting_usb_is_wooting_two(void);
+
+uint8_t wooting_usb_get_key_code_limit(void);
+
+bool wooting_usb_find_keyboard(void);
+
 bool wooting_usb_send_buffer(RGB_PARTS part_number, uint8_t rgb_buffer[]);
 bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0, uint8_t parameter1, uint8_t parameter2, uint8_t parameter3);
