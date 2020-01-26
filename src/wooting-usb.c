@@ -21,8 +21,6 @@ WOOTING_USB_META wooting_usb_meta;
 
 uint8_t key_code_limit = WOOTING_TWO_KEY_CODE_LIMIT;
 
-static uint16_t getCrc16ccitt(const uint8_t* buffer, uint16_t size);
-
 static void_cb disconnected_callback = NULL;
 static hid_device* keyboard_handle = NULL;
 
@@ -46,8 +44,50 @@ static uint16_t getCrc16ccitt(const uint8_t* buffer, uint16_t size)
 	return crc;
 }
 
-void wooting_usb_disconnect(bool trigger_cb) {
+#pragma region Set Meta
+
+void reset_meta() {
 	wooting_usb_meta.connected = false;
+
+	wooting_usb_meta.model = "N/A";
+	wooting_usb_meta.device_type = -1;
+	wooting_usb_meta.keycode_limit = 0;
+	wooting_usb_meta.max_rows = 0;
+	wooting_usb_meta.max_columns = 0;
+	wooting_usb_meta.keycode_limit = 0;
+}
+
+void set_meta_wooting_one() {
+	wooting_usb_meta.model = "One";
+	wooting_usb_meta.device_type = DEVICE_KEYBOARD_TKL;
+	wooting_usb_meta.keycode_limit = WOOTING_ONE_KEY_CODE_LIMIT;
+	wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
+	wooting_usb_meta.max_columns = WOOTING_ONE_RGB_COLS;
+	wooting_usb_meta.keycode_limit = WOOTING_ONE_KEY_CODE_LIMIT;
+}
+
+void set_meta_wooting_two() {
+	wooting_usb_meta.model = "Two";
+	wooting_usb_meta.device_type = DEVICE_KEYBOARD;
+	wooting_usb_meta.keycode_limit = WOOTING_TWO_KEY_CODE_LIMIT;
+	wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
+	wooting_usb_meta.max_columns = WOOTING_TWO_RGB_COLS;
+	wooting_usb_meta.keycode_limit = WOOTING_TWO_KEY_CODE_LIMIT;
+}
+
+WOOTING_USB_META* wooting_usb_get_meta() {
+	//We want to initialise the struct to the default values if it hasn't been set
+	if (wooting_usb_meta.model == NULL){
+		reset_meta();
+	}
+
+	return &wooting_usb_meta;
+}
+
+#pragma endregion
+
+void wooting_usb_disconnect(bool trigger_cb) {
+	reset_meta();
 	hid_close(keyboard_handle);
 	keyboard_handle = NULL;
 
@@ -60,20 +100,6 @@ void wooting_usb_set_disconnected_cb(void_cb cb) {
 	disconnected_callback = cb;
 }
 
-bool wooting_usb_is_wooting_one() {
-	if (!wooting_usb_meta.connected) wooting_usb_find_keyboard();
-	return wooting_usb_meta.wooting_one;
-}
-bool wooting_usb_is_wooting_two() {
-	if (!wooting_usb_meta.connected) wooting_usb_find_keyboard();
-	return wooting_usb_meta.wooting_two;
-}
-
-uint8_t wooting_usb_get_key_code_limit() {
-	if (!wooting_usb_meta.connected) wooting_usb_find_keyboard();
-	return key_code_limit;
-}
-
 bool wooting_usb_find_keyboard() {
 	if (keyboard_handle) {
 		// If keyboard is disconnected read will return -1
@@ -84,17 +110,13 @@ bool wooting_usb_find_keyboard() {
 	
 	struct hid_device_info* hid_info;
 
-	wooting_usb_meta.connected = false;
-	wooting_usb_meta.wooting_one = false;
-	wooting_usb_meta.wooting_two = false;
+	reset_meta();
 	
 	if ((hid_info = hid_enumerate(WOOTING_VID, WOOTING_ONE_PID)) != NULL) {
-		wooting_usb_meta.wooting_one = true;
-		key_code_limit = WOOTING_ONE_KEY_CODE_LIMIT;
+		set_meta_wooting_one();
 	}
 	else if ((hid_info = hid_enumerate(WOOTING_VID, WOOTING_TWO_PID)) != NULL) {
-		wooting_usb_meta.wooting_two = true;
-		key_code_limit = WOOTING_TWO_KEY_CODE_LIMIT;
+		set_meta_wooting_two();
 	}
 	else {
 		return false;
@@ -153,38 +175,39 @@ bool wooting_usb_send_buffer(RGB_PARTS part_number, uint8_t rgb_buffer[]) {
 	report_buffer[2] = 0xDA; // Magicword
 	report_buffer[3] = WOOTING_RAW_COLORS_REPORT; // Report ID
 	switch (part_number) {
-	case PART0: {
-		report_buffer[4] = 0; // Slave nr
-		report_buffer[5] = 0; // Reg start address
-		break;
-	}
-	case PART1: {
-		report_buffer[4] = 0; // Slave nr
-		report_buffer[5] = RGB_RAW_BUFFER_SIZE; // Reg start address
-		break;
-	}
-	case PART2: {
-		report_buffer[4] = 1; // Slave nr
-		report_buffer[5] = 0; // Reg start address
-		break;
-	}
-	case PART3: {
-		report_buffer[4] = 1; // Slave nr
-		report_buffer[5] = RGB_RAW_BUFFER_SIZE; // Reg start address
-		break;
-	}
-	// wooting_rgb_array_update_keyboard will not run into this
-	case PART4: {
-		if (wooting_usb_meta.wooting_one) {
+		case PART0: {
+			report_buffer[4] = 0; // Slave nr
+			report_buffer[5] = 0; // Reg start address
+			break;
+		}
+		case PART1: {
+			report_buffer[4] = 0; // Slave nr
+			report_buffer[5] = RGB_RAW_BUFFER_SIZE; // Reg start address
+			break;
+		}
+		case PART2: {
+			report_buffer[4] = 1; // Slave nr
+			report_buffer[5] = 0; // Reg start address
+			break;
+		}
+		case PART3: {
+			report_buffer[4] = 1; // Slave nr
+			report_buffer[5] = RGB_RAW_BUFFER_SIZE; // Reg start address
+			break;
+		}
+		// wooting_rgb_array_update_keyboard will not run into this
+		case PART4: {
+			//Wooting One will not have this part of the report
+			if (wooting_usb_meta.device_type != DEVICE_KEYBOARD) {
+				return false;
+			}
+			report_buffer[4] = 2; // Slave nr
+			report_buffer[5] = 0; // Reg start address
+			break;
+		}
+		default: {
 			return false;
 		}
-		report_buffer[4] = 2; // Slave nr
-		report_buffer[5] = 0; // Reg start address
-		break;
-	}
-	default: {
-		return false;
-	}
 	}
 
 	memcpy(&report_buffer[6], rgb_buffer, RGB_RAW_BUFFER_SIZE);

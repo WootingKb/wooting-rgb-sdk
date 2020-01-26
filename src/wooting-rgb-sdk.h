@@ -27,54 +27,6 @@ extern "C" {
 
 typedef void(*void_cb)(void);
 
-#define WOOTING_RGB_ROWS 6
-#define WOOTING_RGB_COLS 21
-#define WOOTING_ONE_RGB_COLS 17
-#define WOOTING_TWO_RGB_COLS 21
-
-/** @brief Check if the Keyboard is a Wooting One.
-
-This function will tell you if the connected Keyboard is a Wooting One.
-
-@ingroup API
-
-@returns
-This function returns true (1) if a Wooting One is found.
-*/
-WOOTINGRGBSDK_API bool wooting_rgb_kbd_is_wooting_one(void);
-
-/** @brief Check if the Keyboard is a Wooting Two.
-
-This function will tell you if the connected Keyboard is a Wooting Two.
-
-@ingroup API
-
-@returns
-This function returns true (1) if a Wooting Two is found.
-*/
-WOOTINGRGBSDK_API bool wooting_rgb_kbd_is_wooting_two(void);
-
-/** @brief return the amount of RGB Columns.
-
-This function will return the amount of RGB Columns present on the connected Wooting.
-
-@ingroup API
-
-@returns
-This function returns the amount of RGB Columns (between 0 and 255).
-*/
-WOOTINGRGBSDK_API uint8_t wooting_rgb_cols(void);
-
-/** @brief return the amount of RGB Rows.
-
-This function will return the amount of RGB Rows present on the connected Wooting.
-
-@ingroup API
-
-@returns
-This function returns the amount of RGB Rows (between 0 and 255).
-*/
-WOOTINGRGBSDK_API uint8_t wooting_rgb_rows(void);
 
 /** @brief Check if keyboard connected.
 
@@ -204,6 +156,17 @@ Expected size is 6 row * 21 columns * 3 colors per key = 378 bytes.
 This functions return true (1) if the colours are changed (if auto update flag: updated).
 */
 WOOTINGRGBSDK_API bool wooting_rgb_array_set_full(const uint8_t *colors_buffer);
+
+/** @brief Retrieve information about the connected Device
+
+This function returns a pointer to a struct which provides various relevant details about the currently connected device. E.g. max rgb rows, columns, etc
+
+@ingroup API
+
+@returns
+This functions returns a pointer to a `WOOTING_USB_META` struct which contains relevant Device Information
+*/
+WOOTINGRGBSDK_API const WOOTING_USB_META* wooting_rgb_device_info();
 
 #ifdef __cplusplus
 }

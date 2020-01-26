@@ -43,27 +43,12 @@ static uint8_t get_safe_led_idex(uint8_t row, uint8_t column) {
 		{ 10, 22, 21, NOLED, NOLED, NOLED, 33, NOLED, NOLED, NOLED, 94, 58, 67, 68, 70, 79, 82, NOLED, 111, 112, NOLED }
 	};
 
-	if (row < WOOTING_RGB_ROWS && column < wooting_rgb_cols()) {
+	WOOTING_USB_META* meta = wooting_usb_get_meta();
+	if (row < meta->max_rows && column < meta->max_columns) {
 		return rgb_led_index[row][column];
 	} else {
 		return NOLED;
 	}
-}
-
-bool wooting_rgb_kbd_is_wooting_one() {
-	return wooting_usb_is_wooting_one();
-}
-
-bool wooting_rgb_kbd_is_wooting_two() {
-	return wooting_usb_is_wooting_two();
-}
-
-uint8_t wooting_rgb_cols() {
-	return wooting_usb_is_wooting_one() ? WOOTING_ONE_RGB_COLS : WOOTING_TWO_RGB_COLS;
-}
-
-uint8_t wooting_rgb_rows() {
-	return WOOTING_RGB_ROWS;
 }
 
 bool wooting_rgb_kbd_connected() {
@@ -77,6 +62,7 @@ void wooting_rgb_set_disconnected_cb(void_cb cb) {
 bool wooting_rgb_reset() {
 	if (wooting_usb_send_feature(WOOTING_RESET_ALL_COMMAND, 0, 0, 0, 0)) {
 		wooting_usb_disconnect(false);
+		return true;
 	}
 	else {
 		return false;
@@ -162,7 +148,7 @@ bool wooting_rgb_array_update_keyboard() {
 		rgb_buffer3_changed = false;
 	}
 
-	if (rgb_buffer4_changed && wooting_usb_is_wooting_two()) {
+	if (rgb_buffer4_changed && wooting_usb_get_meta()->device_type == DEVICE_KEYBOARD) {
 		if (!wooting_usb_send_buffer(PART4, rgb_buffer4)) {
 			return false;
 		}
@@ -185,7 +171,7 @@ static bool wooting_rgb_array_change_single(uint8_t row, uint8_t column, uint8_t
 	uint8_t *buffer_pointer;
 
 	// prevent assigning led's that don't exist
-	if (led_index > wooting_usb_get_key_code_limit()) {
+	if (led_index > wooting_usb_get_meta()->keycode_limit) {
 		return false;
 	}
 	if (led_index >= 96) {
@@ -244,10 +230,10 @@ bool wooting_rgb_array_set_single(uint8_t row, uint8_t column, uint8_t red, uint
 }
 
 bool wooting_rgb_array_set_full(const uint8_t* colors_buffer) {
-	const uint8_t columns = wooting_rgb_cols();
+	const uint8_t columns = wooting_usb_get_meta()->max_columns;
 
 	for (uint8_t row = 0; row < WOOTING_RGB_ROWS; row++) {
-		uint8_t* color = colors_buffer + row * WOOTING_RGB_COLS * 3;
+		const uint8_t* color = colors_buffer + row * WOOTING_RGB_COLS * 3;
 		for (uint8_t col = 0; col < columns; col++) {
 			uint8_t red = color[0];
 			uint8_t green = color[1];
@@ -265,4 +251,9 @@ bool wooting_rgb_array_set_full(const uint8_t* colors_buffer) {
 	else {
 		return true;
 	}
+}
+
+const WOOTING_USB_META* wooting_rgb_device_info() {
+	if (!wooting_usb_get_meta()->connected) wooting_usb_find_keyboard();
+	return wooting_usb_get_meta();
 }
