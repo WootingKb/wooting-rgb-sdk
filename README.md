@@ -10,9 +10,14 @@ This project will allow you to build your own DLL and customize the source code.
 #### Windows
 [Visual studio](https://visualstudio.microsoft.com/)
 #### Linux
-to-do
+Dependencies:
+```
+libusb-1.0, libusb-dev, hidapi, libhidapi-dev
+```
+Additionally, you will need `pkg-config`, `git`, `make` and `gcc` to compile the Library.
 
 ### Installing
+## Windows
 ```
 git clone --recursive https://github.com/WootingKb/wooting-rgb-sdk.git 
 ```
@@ -28,6 +33,15 @@ Now hit the build and find your DLL in the folder depending on your configuratio
 ```
 \wooting-rgb-sdk\windows\Release\wooting-rgb-sdk.dll
 ```
+
+## Linux
+Clone the Git Repository:
+```
+git clone https://github.com/WootingKb/wooting-rgb-sdk.git
+```
+Change into the Linux Directory using `cd wooting-rgb-sdk/linux` and simply run `make`.
+
+If you wish to use the Library yourself it might be useful to install it to your System. Do so with `sudo make install`
 
 ## Example
 
