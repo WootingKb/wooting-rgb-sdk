@@ -7,6 +7,10 @@
 */
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef _WIN32
 #ifdef WOOTINGRGBSDK_EXPORTS  
 #define WOOTINGRGBSDK_API __declspec(dllexport)   
@@ -154,3 +158,8 @@ Expected size is 6 row * 21 columns * 3 colors per key = 576 bytes.
 This functions return true (1) if the colours are changed (if auto update flag: updated).
 */
 WOOTINGRGBSDK_API bool wooting_rgb_array_set_full(const uint8_t *colors_buffer);
+
+#ifdef __cplusplus
+}
+#endif
+
