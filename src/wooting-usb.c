@@ -17,7 +17,7 @@
 #define WOOTING_ONE_PID 0xFF01
 #define WOOTING_TWO_PID 0xFF02
 
-WOOTING_USB_META wooting_usb_meta;
+static WOOTING_USB_META wooting_usb_meta;
 
 uint8_t key_code_limit = WOOTING_TWO_KEY_CODE_LIMIT;
 
@@ -46,33 +46,33 @@ static uint16_t getCrc16ccitt(const uint8_t* buffer, uint16_t size)
 
 #pragma region Set Meta
 
-void reset_meta() {
+static void reset_meta() {
 	wooting_usb_meta.connected = false;
 
 	wooting_usb_meta.model = "N/A";
 	wooting_usb_meta.device_type = -1;
-	wooting_usb_meta.keycode_limit = 0;
+	wooting_usb_meta.led_index_max = 0;
 	wooting_usb_meta.max_rows = 0;
 	wooting_usb_meta.max_columns = 0;
-	wooting_usb_meta.keycode_limit = 0;
+	wooting_usb_meta.led_index_max = 0;
 }
 
-void set_meta_wooting_one() {
-	wooting_usb_meta.model = "One";
+static void set_meta_wooting_one() {
+	wooting_usb_meta.model = "Wooting one";
 	wooting_usb_meta.device_type = DEVICE_KEYBOARD_TKL;
-	wooting_usb_meta.keycode_limit = WOOTING_ONE_KEY_CODE_LIMIT;
+	wooting_usb_meta.led_index_max = WOOTING_ONE_KEY_CODE_LIMIT;
 	wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
 	wooting_usb_meta.max_columns = WOOTING_ONE_RGB_COLS;
-	wooting_usb_meta.keycode_limit = WOOTING_ONE_KEY_CODE_LIMIT;
+	wooting_usb_meta.led_index_max = WOOTING_ONE_KEY_CODE_LIMIT;
 }
 
-void set_meta_wooting_two() {
-	wooting_usb_meta.model = "Two";
+static void set_meta_wooting_two() {
+	wooting_usb_meta.model = "Wooting two";
 	wooting_usb_meta.device_type = DEVICE_KEYBOARD;
-	wooting_usb_meta.keycode_limit = WOOTING_TWO_KEY_CODE_LIMIT;
+	wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
 	wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
 	wooting_usb_meta.max_columns = WOOTING_TWO_RGB_COLS;
-	wooting_usb_meta.keycode_limit = WOOTING_TWO_KEY_CODE_LIMIT;
+	wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
 }
 
 WOOTING_USB_META* wooting_usb_get_meta() {

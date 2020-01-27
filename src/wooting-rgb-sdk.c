@@ -171,7 +171,7 @@ static bool wooting_rgb_array_change_single(uint8_t row, uint8_t column, uint8_t
 	uint8_t *buffer_pointer;
 
 	// prevent assigning led's that don't exist
-	if (led_index > wooting_usb_get_meta()->keycode_limit) {
+	if (led_index > wooting_usb_get_meta()->led_index_max) {
 		return false;
 	}
 	if (led_index >= 96) {

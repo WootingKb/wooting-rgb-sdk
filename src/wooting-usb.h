@@ -31,7 +31,7 @@ typedef struct WOOTING_USB_META {
 	const char* model;
 	uint8_t max_rows;
 	uint8_t max_columns;
-	uint8_t keycode_limit;
+	uint8_t led_index_max;
 	WOOTING_DEVICE_TYPE device_type;
 
 } WOOTING_USB_META;
