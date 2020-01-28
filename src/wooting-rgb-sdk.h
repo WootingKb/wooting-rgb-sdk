@@ -24,9 +24,7 @@ extern "C" {
 
 #include "stdint.h"
 #include "stdbool.h"
-
-typedef void(*void_cb)(void);
-
+#include "wooting-usb.h"
 
 /** @brief Check if keyboard connected.
 

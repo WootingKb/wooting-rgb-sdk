@@ -7,7 +7,6 @@
 */
 #include "stdbool.h"
 #include "stdint.h"
-#include "wooting-usb.h"
 #include "wooting-rgb-sdk.h"
 
 #define NOLED 255
