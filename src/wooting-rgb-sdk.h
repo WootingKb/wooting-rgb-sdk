@@ -27,8 +27,6 @@ extern "C" {
 
 typedef void(*void_cb)(void);
 
-#define WOOTING_RGB_ROWS 6
-#define WOOTING_RGB_COLS 21
 
 /** @brief Check if keyboard connected.
 
@@ -149,7 +147,7 @@ This function will set a complete color array. This will not directly update the
 If you use a non-C language it is recommended to use the wooting_rgb_array_set_single function to change the colors to avoid compatibility issues.
 
 Buffer should be layout out as [Row0Col0Red, Row0Col0Green, Row0Col0Blue, Row0Col1Red, Row0Col1Green, Row0Col1Blue, ... Row5Row20Red, Row5Row20Green, Row5Row20Blue]. 
-Expected size is 6 row * 21 columns * 3 colors per key = 576 bytes.
+Expected size is 6 row * 21 columns * 3 colors per key = 378 bytes.
 
 @ingroup API
 @param colors_buffer Pointer to a buffer of a full color array 
@@ -158,6 +156,17 @@ Expected size is 6 row * 21 columns * 3 colors per key = 576 bytes.
 This functions return true (1) if the colours are changed (if auto update flag: updated).
 */
 WOOTINGRGBSDK_API bool wooting_rgb_array_set_full(const uint8_t *colors_buffer);
+
+/** @brief Retrieve information about the connected Device
+
+This function returns a pointer to a struct which provides various relevant details about the currently connected device. E.g. max rgb rows, columns, etc
+
+@ingroup API
+
+@returns
+This functions returns a pointer to a `WOOTING_USB_META` struct which contains relevant Device Information
+*/
+WOOTINGRGBSDK_API const WOOTING_USB_META* wooting_rgb_device_info();
 
 #ifdef __cplusplus
 }

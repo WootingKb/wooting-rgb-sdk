@@ -1,3 +1,4 @@
 [submodule "hidapi"]
 	path = hidapi
-	url = https://github.com/PastaJ36/hidapi.git
+	url = https://github.com/libusb/hidapi.git
+	branch = master

@@ -17,7 +17,34 @@ typedef enum RGB_PARTS {
 	PART4
 } RGB_PARTS;
 
+
+typedef enum WOOTING_DEVICE_TYPE {
+	// 10 Keyless Keyboard. E.g. Wooting One
+	DEVICE_KEYBOARD_TKL = 1,
+	
+	// Full Size keyboard. E.g. Wooting Two
+	DEVICE_KEYBOARD = 2
+} WOOTING_DEVICE_TYPE;
+
+typedef struct WOOTING_USB_META {
+	bool connected;
+	const char* model;
+	uint8_t max_rows;
+	uint8_t max_columns;
+	uint8_t led_index_max;
+	WOOTING_DEVICE_TYPE device_type;
+
+} WOOTING_USB_META;
+
 #define RGB_RAW_BUFFER_SIZE 96
+
+#define WOOTING_RGB_ROWS 6
+#define WOOTING_RGB_COLS 21
+#define WOOTING_ONE_RGB_COLS 17
+#define WOOTING_TWO_RGB_COLS 21
+
+#define WOOTING_ONE_KEY_CODE_LIMIT 95
+#define WOOTING_TWO_KEY_CODE_LIMIT 116
 
 #define WOOTING_RAW_COLORS_REPORT 11
 #define WOOTING_SINGLE_COLOR_COMMAND 30
@@ -27,6 +54,10 @@ typedef enum RGB_PARTS {
 
 void wooting_usb_set_disconnected_cb(void_cb cb);
 void wooting_usb_disconnect(bool trigger_cb);
-bool wooting_usb_find_keyboard();
+
+bool wooting_usb_find_keyboard(void);
+
+WOOTING_USB_META* wooting_usb_get_meta();
+
 bool wooting_usb_send_buffer(RGB_PARTS part_number, uint8_t rgb_buffer[]);
 bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0, uint8_t parameter1, uint8_t parameter2, uint8_t parameter3);

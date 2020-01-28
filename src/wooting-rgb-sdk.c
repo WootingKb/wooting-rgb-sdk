@@ -24,11 +24,13 @@ static uint8_t rgb_buffer0[RGB_RAW_BUFFER_SIZE] = { 0 };
 static uint8_t rgb_buffer1[RGB_RAW_BUFFER_SIZE] = { 0 };
 static uint8_t rgb_buffer2[RGB_RAW_BUFFER_SIZE] = { 0 };
 static uint8_t rgb_buffer3[RGB_RAW_BUFFER_SIZE] = { 0 };
+static uint8_t rgb_buffer4[RGB_RAW_BUFFER_SIZE] = { 0 };
 
 static bool rgb_buffer0_changed = false;
 static bool rgb_buffer1_changed = false;
 static bool rgb_buffer2_changed = false;
 static bool rgb_buffer3_changed = false;
+static bool rgb_buffer4_changed = false;
 
 // Converts the array index to a memory location in the RGB buffers
 static uint8_t get_safe_led_idex(uint8_t row, uint8_t column) {
@@ -41,7 +43,8 @@ static uint8_t get_safe_led_idex(uint8_t row, uint8_t column) {
 		{ 10, 22, 21, NOLED, NOLED, NOLED, 33, NOLED, NOLED, NOLED, 94, 58, 67, 68, 70, 79, 82, NOLED, 111, 112, NOLED }
 	};
 
-	if (row < WOOTING_RGB_ROWS && column < WOOTING_RGB_COLS) {
+	WOOTING_USB_META* meta = wooting_usb_get_meta();
+	if (row < meta->max_rows && column < meta->max_columns) {
 		return rgb_led_index[row][column];
 	} else {
 		return NOLED;
@@ -59,6 +62,7 @@ void wooting_rgb_set_disconnected_cb(void_cb cb) {
 bool wooting_rgb_reset() {
 	if (wooting_usb_send_feature(WOOTING_RESET_ALL_COMMAND, 0, 0, 0, 0)) {
 		wooting_usb_disconnect(false);
+		return true;
 	}
 	else {
 		return false;
@@ -144,6 +148,13 @@ bool wooting_rgb_array_update_keyboard() {
 		rgb_buffer3_changed = false;
 	}
 
+	if (rgb_buffer4_changed && wooting_usb_get_meta()->device_type == DEVICE_KEYBOARD) {
+		if (!wooting_usb_send_buffer(PART4, rgb_buffer4)) {
+			return false;
+		}
+		rgb_buffer4_changed = false;
+	}
+
 	return true;
 }
 
@@ -155,13 +166,19 @@ static bool wooting_rgb_array_change_single(uint8_t row, uint8_t column, uint8_t
 		0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d,
 		0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d
 	};
+
 	uint8_t led_index = get_safe_led_idex(row, column);
 	uint8_t *buffer_pointer;
 
-	if (led_index >= 96) {
+	// prevent assigning led's that don't exist
+	if (led_index > wooting_usb_get_meta()->led_index_max) {
 		return false;
 	}
-	if (led_index >= 72) {
+	if (led_index >= 96) {
+		buffer_pointer = rgb_buffer4;
+		rgb_buffer4_changed = true;
+	}
+	else if (led_index >= 72) {
 		buffer_pointer = rgb_buffer3;
 		rgb_buffer3_changed = true;
 	}
@@ -189,7 +206,7 @@ static bool wooting_rgb_array_change_single(uint8_t row, uint8_t column, uint8_t
 		rgb_buffer2[iso_enter_index + 0x10] = rgb_buffer2[buffer_index + 0x10];
 		rgb_buffer2[iso_enter_index + 0x20] = rgb_buffer2[buffer_index + 0x20];
 	}
-	if (led_index == LED_LEFT_SHIFT_ANSI) {
+	else if (led_index == LED_LEFT_SHIFT_ANSI) {
 		uint8_t iso_shift_index = pwm_mem_map[LED_LEFT_SHIFT_ISO];
 		rgb_buffer0[iso_shift_index] = rgb_buffer0[buffer_index];
 		rgb_buffer0[iso_shift_index + 0x10] = rgb_buffer0[buffer_index + 0x10];
@@ -213,16 +230,18 @@ bool wooting_rgb_array_set_single(uint8_t row, uint8_t column, uint8_t red, uint
 }
 
 bool wooting_rgb_array_set_full(const uint8_t* colors_buffer) {
-	int baseIndex = 0;
-	for (int row = 0; row < WOOTING_RGB_ROWS; row++) {
-		for (int col = 0; col < WOOTING_RGB_COLS; col++) {
-			uint8_t red = colors_buffer[baseIndex + 0];
-			uint8_t green = colors_buffer[baseIndex + 1];
-			uint8_t blue = colors_buffer[baseIndex + 2];
+	const uint8_t columns = wooting_usb_get_meta()->max_columns;
+
+	for (uint8_t row = 0; row < WOOTING_RGB_ROWS; row++) {
+		const uint8_t* color = colors_buffer + row * WOOTING_RGB_COLS * 3;
+		for (uint8_t col = 0; col < columns; col++) {
+			uint8_t red = color[0];
+			uint8_t green = color[1];
+			uint8_t blue = color[2];
 
 			wooting_rgb_array_change_single(row, col, red, green, blue);
 
-			baseIndex += 3;
+			color += 3;
 		}
 	}
 
@@ -232,4 +251,9 @@ bool wooting_rgb_array_set_full(const uint8_t* colors_buffer) {
 	else {
 		return true;
 	}
+}
+
+const WOOTING_USB_META* wooting_rgb_device_info() {
+	if (!wooting_usb_get_meta()->connected) wooting_usb_find_keyboard();
+	return wooting_usb_get_meta();
 }
