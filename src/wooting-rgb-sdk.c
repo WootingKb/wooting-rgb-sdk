@@ -228,7 +228,9 @@ static bool wooting_rgb_array_change_single(uint8_t row, uint8_t column, uint8_t
 }
 
 bool wooting_rgb_array_set_single(uint8_t row, uint8_t column, uint8_t red, uint8_t green, uint8_t blue) {
-	if (!wooting_rgb_kbd_connected()) {
+	//We just check to see if we believe the keyboard to be connected here as this call may just be updating the array and not actually communicating with the keyboard
+	//If auto update is on then the update_keyboard method will ping the keyboard before communicating with the keyboard
+	if (!wooting_usb_get_meta()->connected) {
 		return false;
 	}
 
@@ -245,7 +247,8 @@ bool wooting_rgb_array_set_single(uint8_t row, uint8_t column, uint8_t red, uint
 }
 
 bool wooting_rgb_array_set_full(const uint8_t* colors_buffer) {
-	if (!wooting_rgb_kbd_connected()) {
+	//Just need to check if we believe it is connected, the update_keyboard call will ping the keyboard if it is necessary
+	if (!wooting_usb_get_meta()->connected) {
 		return false;
 	}
 

@@ -105,7 +105,11 @@ bool wooting_usb_find_keyboard() {
 		// If keyboard is disconnected read will return -1
 		// https://github.com/signal11/hidapi/issues/55#issuecomment-5307209
 		unsigned char stub = 0;
-		return hid_read_timeout(keyboard_handle, &stub, 0, 0) != -1;
+		if (hid_read_timeout(keyboard_handle, &stub, 0, 0) != -1) {
+			return true;
+		} else {
+			wooting_usb_disconnect(true);
+		}
 	}
 	
 	struct hid_device_info* hid_info;
