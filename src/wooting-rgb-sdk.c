@@ -69,6 +69,10 @@ bool wooting_rgb_reset() {
 }
 
 bool wooting_rgb_direct_set_key(uint8_t row, uint8_t column, uint8_t red, uint8_t green, uint8_t blue) {
+	if (!wooting_rgb_kbd_connected()) {
+		return false;
+	}
+
 	uint8_t keyCode = get_safe_led_idex(row, column);
 
 	if (keyCode == NOLED) {
@@ -92,6 +96,10 @@ bool wooting_rgb_direct_set_key(uint8_t row, uint8_t column, uint8_t red, uint8_
 }
 
 bool wooting_rgb_direct_reset_key(uint8_t row, uint8_t column) {
+	if (!wooting_rgb_kbd_connected()) {
+		return false;
+	}
+
 	uint8_t keyCode = get_safe_led_idex(row, column);
 
 	if (keyCode == NOLED) {
@@ -119,6 +127,10 @@ void wooting_rgb_array_auto_update(bool auto_update) {
 }
 
 bool wooting_rgb_array_update_keyboard() {
+	if (!wooting_rgb_kbd_connected()) {
+		return false;
+	}
+
 	if (rgb_buffer0_changed) {
 		if (!wooting_usb_send_buffer(PART0, rgb_buffer0)) {
 			return false;
@@ -216,6 +228,10 @@ static bool wooting_rgb_array_change_single(uint8_t row, uint8_t column, uint8_t
 }
 
 bool wooting_rgb_array_set_single(uint8_t row, uint8_t column, uint8_t red, uint8_t green, uint8_t blue) {
+	if (!wooting_rgb_kbd_connected()) {
+		return false;
+	}
+
 	if (!wooting_rgb_array_change_single(row, column, red, green, blue)) {
 		return false;
 	}
@@ -229,6 +245,10 @@ bool wooting_rgb_array_set_single(uint8_t row, uint8_t column, uint8_t red, uint
 }
 
 bool wooting_rgb_array_set_full(const uint8_t* colors_buffer) {
+	if (!wooting_rgb_kbd_connected()) {
+		return false;
+	}
+
 	const uint8_t columns = wooting_usb_get_meta()->max_columns;
 
 	for (uint8_t row = 0; row < WOOTING_RGB_ROWS; row++) {
