@@ -24,3 +24,5 @@ src/*.o
 linux/*.o
 linux/*.so
 
+mac/*.dylib
+

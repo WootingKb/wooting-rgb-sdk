@@ -43,6 +43,15 @@ Change into the Linux Directory using `cd wooting-rgb-sdk/linux` and simply run 
 
 If you wish to use the Library yourself it might be useful to install it to your System. Do so with `sudo make install`
 
+## Mac
+Clone the Git Repository:
+```
+git clone https://github.com/WootingKb/wooting-rgb-sdk.git
+```
+Change into the Mac Directory using `cd wooting-rgb-sdk/mac` and simply run `make`.
+
+If you wish to use the Library yourself it might be useful to install it to your System. Do so with `sudo make install`
+
 ## Example
 
 For examples check out the [wootdev website](https://dev.wooting.io).
