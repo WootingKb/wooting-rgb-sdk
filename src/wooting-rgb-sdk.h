@@ -50,10 +50,23 @@ None.
 */
 WOOTINGRGBSDK_API void wooting_rgb_set_disconnected_cb(void_cb cb);
 
-/** @brief Reset all colors on keyboard to the original colors. 
+/** @brief Reset all colors on keyboard to the original colors.
 
-This function will restore all the colours to the colours that were originally on the keyboard. This function
-should always be called when you close the application.
+This function will restore all the colours to the colours that were originally
+on the keyboard.
+
+@ingroup API
+
+@returns
+Return true (1) if the keyboard is reset
+*/
+WOOTINGRGBSDK_API bool wooting_rgb_reset_rgb(void);
+
+/** @brief Reset all colors on keyboard to the original colors.
+
+This function will restore all the colours to the colours that were originally
+on the keyboard and closes the keyboard handle. This function should always be
+called when you close the application.
 
 @ingroup API
 

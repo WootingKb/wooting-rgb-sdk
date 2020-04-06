@@ -58,8 +58,13 @@ void wooting_rgb_set_disconnected_cb(void_cb cb) {
 	wooting_usb_set_disconnected_cb(cb);
 }
 
+bool wooting_rgb_reset_rgb() {
+	return wooting_usb_send_feature(WOOTING_RESET_ALL_COMMAND, 0, 0, 0, 0);
+}
+
+
 bool wooting_rgb_reset() {
-	if (wooting_usb_send_feature(WOOTING_RESET_ALL_COMMAND, 0, 0, 0, 0)) {
+	if (wooting_rgb_reset_rgb()) {
 		wooting_usb_disconnect(false);
 		return true;
 	}
