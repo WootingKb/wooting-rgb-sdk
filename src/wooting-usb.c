@@ -44,7 +44,8 @@ static uint16_t getCrc16ccitt(const uint8_t* buffer, uint16_t size)
 	return crc;
 }
 
-#pragma region Set Meta
+
+typedef void (*set_meta_func)();
 
 static void reset_meta() {
 	wooting_usb_meta.connected = false;
@@ -56,6 +57,7 @@ static void reset_meta() {
 	wooting_usb_meta.max_columns = 0;
 	wooting_usb_meta.led_index_max = 0;
 }
+
 
 static void set_meta_wooting_one() {
 	wooting_usb_meta.model = "Wooting one";
@@ -84,9 +86,10 @@ WOOTING_USB_META* wooting_usb_get_meta() {
 	return &wooting_usb_meta;
 }
 
-#pragma endregion
-
 void wooting_usb_disconnect(bool trigger_cb) {
+	#ifdef DEBUG_LOG
+	printf("Keyboard disconnected\n");
+	#endif
 	reset_meta();
 	hid_close(keyboard_handle);
 	keyboard_handle = NULL;
@@ -102,27 +105,49 @@ void wooting_usb_set_disconnected_cb(void_cb cb) {
 
 bool wooting_usb_find_keyboard() {
 	if (keyboard_handle) {
+		#ifdef DEBUG_LOG
+		printf("Got keyboard handle already\n");
+		#endif
 		// If keyboard is disconnected read will return -1
 		// https://github.com/signal11/hidapi/issues/55#issuecomment-5307209
 		unsigned char stub = 0;
 		if (hid_read_timeout(keyboard_handle, &stub, 0, 0) != -1) {
+			#ifdef DEBUG_LOG
+			printf("Keyboard succeeded test read\n");
+			#endif
 			return true;
 		} else {
+			#ifdef DEBUG_LOG
+			printf("Keyboard failed test read, disconnecting...\n");
+			#endif
 			wooting_usb_disconnect(true);
 		}
+	} else {
+		#ifdef DEBUG_LOG
+		printf("No keyboard handle already\n");
+		#endif
 	}
 	
 	struct hid_device_info* hid_info;
 
 	reset_meta();
-	
+	set_meta_func meta_func;
 	if ((hid_info = hid_enumerate(WOOTING_VID, WOOTING_ONE_PID)) != NULL) {
-		set_meta_wooting_one();
+		#ifdef DEBUG_LOG
+		printf("Enumerate on Wooting One Successful\n");
+		#endif
+		meta_func = set_meta_wooting_one;
 	}
 	else if ((hid_info = hid_enumerate(WOOTING_VID, WOOTING_TWO_PID)) != NULL) {
-		set_meta_wooting_two();
+		#ifdef DEBUG_LOG
+		printf("Enumerate on Wooting Two Successful\n");
+		#endif
+		meta_func = set_meta_wooting_two;
 	}
 	else {
+		#ifdef DEBUG_LOG
+		printf("Enumerate failed\n");
+		#endif
 		return false;
 	}
 
@@ -141,20 +166,39 @@ bool wooting_usb_find_keyboard() {
 
 	uint8_t interfaceNr = highestInterfaceNr - 4;
 
+	#ifdef DEBUG_LOG
+	printf("Higest Interface No: %d, Search interface No: %d\n", highestInterfaceNr, interfaceNr);
+	#endif
+
 	// Reset walker and look for the interface number
 	hid_info_walker = hid_info;
 	while (hid_info_walker) {
+		#ifdef DEBUG_LOG
+		printf("Found interface No: %d\n", hid_info_walker->interface_number);
+		#endif
 		if (hid_info_walker->interface_number == interfaceNr) {
+			#ifdef DEBUG_LOG
+			printf("Attempting to open\n");
+			#endif
 			keyboard_handle = hid_open_path(hid_info_walker->path);
-
 			if (keyboard_handle) {
+				#ifdef DEBUG_LOG
+				printf("Found keyboard_handle: %s\n", hid_info_walker->path);
+				#endif
 				// Once the keyboard is found send an init command and abuse two reads to make a 50 ms delay to make sure the keyboard is ready
-				wooting_usb_send_feature(WOOTING_COLOR_INIT_COMMAND, 0, 0, 0, 0);
+				bool result = wooting_usb_send_feature(WOOTING_COLOR_INIT_COMMAND, 0, 0, 0, 0);
+				#ifdef DEBUG_LOG
+				printf("Color init result: %d\n", result);
+				#endif
 				unsigned char stub = 0;
 				hid_read(keyboard_handle, &stub, 0);
 				hid_read_timeout(keyboard_handle, &stub, 0, 50);
 
 				keyboard_found = true;
+			} else {
+				#ifdef DEBUG_LOG
+				printf("No Keyboard handle: %S\n", hid_error(NULL));
+				#endif
 			}
 			break;
 		}
@@ -163,7 +207,13 @@ bool wooting_usb_find_keyboard() {
 	}
 
 	hid_free_enumeration(hid_info);
-	wooting_usb_meta.connected = true;
+	if (keyboard_found){
+		meta_func();
+		wooting_usb_meta.connected = true;
+	}
+	#ifdef DEBUG_LOG
+	printf("Finished looking for keyboard returned: %d\n", keyboard_found);
+	#endif
 	return keyboard_found;
 }
 
@@ -219,11 +269,14 @@ bool wooting_usb_send_buffer(RGB_PARTS part_number, uint8_t rgb_buffer[]) {
 	uint16_t crc = getCrc16ccitt((uint8_t*)&report_buffer, WOOTING_REPORT_SIZE - 2);
 	report_buffer[127] = (uint8_t)crc;
 	report_buffer[128] = crc >> 8;
-
-	if (hid_write(keyboard_handle, report_buffer, WOOTING_REPORT_SIZE) == WOOTING_REPORT_SIZE) {
+	int report_size = hid_write(keyboard_handle, report_buffer, WOOTING_REPORT_SIZE);
+	if (report_size == WOOTING_REPORT_SIZE) {
 		return true;
 	}
 	else {
+		#ifdef DEBUG_LOG
+		printf("Got report size: %d, expected: %d, disconnecting..\n", report_size, WOOTING_REPORT_SIZE);
+		#endif
 		wooting_usb_disconnect(true);
 		return false;
 	}
@@ -250,11 +303,15 @@ bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0, uint8_t par
 	report_buffer[5] = parameter2;
 	report_buffer[6] = parameter1;
 	report_buffer[7] = parameter0;
-
-	if (hid_send_feature_report(keyboard_handle, report_buffer, WOOTING_COMMAND_SIZE) == WOOTING_COMMAND_SIZE) {
+	int command_size = hid_send_feature_report(keyboard_handle, report_buffer, WOOTING_COMMAND_SIZE);
+	if (command_size == WOOTING_COMMAND_SIZE) {
 		return true;
 	}
 	else {
+		#ifdef DEBUG_LOG
+		printf("Got command size: %d, expected: %d, disconnecting..\n", command_size, WOOTING_COMMAND_SIZE);
+		#endif
+
 		wooting_usb_disconnect(true);
 		return false;
 	}
