@@ -186,7 +186,10 @@ bool wooting_usb_find_keyboard() {
 				printf("Found keyboard_handle: %s\n", hid_info_walker->path);
 				#endif
 				// Once the keyboard is found send an init command and abuse two reads to make a 50 ms delay to make sure the keyboard is ready
-				bool result = wooting_usb_send_feature(WOOTING_COLOR_INIT_COMMAND, 0, 0, 0, 0);
+				#ifdef DEBUG_LOG
+				bool result = 
+				#endif
+				wooting_usb_send_feature(WOOTING_COLOR_INIT_COMMAND, 0, 0, 0, 0);
 				#ifdef DEBUG_LOG
 				printf("Color init result: %d\n", result);
 				#endif
