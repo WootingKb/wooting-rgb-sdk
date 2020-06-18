@@ -73,7 +73,7 @@ called when you close the application.
 @returns
 Return true (1) if the keyboard is reset
 */
-WOOTINGRGBSDK_API bool wooting_rgb_reset(void);
+WOOTINGRGBSDK_API bool wooting_rgb_close(void);
 
 /** @brief Directly set and update 1 key on the keyboard.
 

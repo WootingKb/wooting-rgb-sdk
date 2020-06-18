@@ -63,7 +63,7 @@ bool wooting_rgb_reset_rgb() {
 }
 
 
-bool wooting_rgb_reset() {
+bool wooting_rgb_close() {
 	if (wooting_rgb_reset_rgb()) {
 		wooting_usb_disconnect(false);
 		return true;
