@@ -58,8 +58,13 @@ void wooting_rgb_set_disconnected_cb(void_cb cb) {
 	wooting_usb_set_disconnected_cb(cb);
 }
 
-bool wooting_rgb_reset() {
-	if (wooting_usb_send_feature(WOOTING_RESET_ALL_COMMAND, 0, 0, 0, 0)) {
+bool wooting_rgb_reset_rgb() {
+	return wooting_usb_send_feature(WOOTING_RESET_ALL_COMMAND, 0, 0, 0, 0);
+}
+
+
+bool wooting_rgb_close() {
+	if (wooting_rgb_reset_rgb()) {
 		wooting_usb_disconnect(false);
 		return true;
 	}
@@ -69,6 +74,12 @@ bool wooting_rgb_reset() {
 }
 
 bool wooting_rgb_direct_set_key(uint8_t row, uint8_t column, uint8_t red, uint8_t green, uint8_t blue) {
+	// We don't need to call this here as the wooting_usb_send_feature calls will perform the check again and there's no need to
+	// run this multiple times, especially when each call will attempt to ensure connection is still available
+	// if (!wooting_rgb_kbd_connected()) {
+	// 	return false;
+	// }
+
 	uint8_t keyCode = get_safe_led_idex(row, column);
 
 	if (keyCode == NOLED) {
@@ -92,6 +103,10 @@ bool wooting_rgb_direct_set_key(uint8_t row, uint8_t column, uint8_t red, uint8_
 }
 
 bool wooting_rgb_direct_reset_key(uint8_t row, uint8_t column) {
+	if (!wooting_rgb_kbd_connected()) {
+		return false;
+	}
+
 	uint8_t keyCode = get_safe_led_idex(row, column);
 
 	if (keyCode == NOLED) {
@@ -119,6 +134,10 @@ void wooting_rgb_array_auto_update(bool auto_update) {
 }
 
 bool wooting_rgb_array_update_keyboard() {
+	if (!wooting_rgb_kbd_connected()) {
+		return false;
+	}
+
 	if (rgb_buffer0_changed) {
 		if (!wooting_usb_send_buffer(PART0, rgb_buffer0)) {
 			return false;
@@ -216,6 +235,12 @@ static bool wooting_rgb_array_change_single(uint8_t row, uint8_t column, uint8_t
 }
 
 bool wooting_rgb_array_set_single(uint8_t row, uint8_t column, uint8_t red, uint8_t green, uint8_t blue) {
+	//We just check to see if we believe the keyboard to be connected here as this call may just be updating the array and not actually communicating with the keyboard
+	//If auto update is on then the update_keyboard method will ping the keyboard before communicating with the keyboard
+	if (!wooting_usb_get_meta()->connected) {
+		return false;
+	}
+
 	if (!wooting_rgb_array_change_single(row, column, red, green, blue)) {
 		return false;
 	}
@@ -229,6 +254,11 @@ bool wooting_rgb_array_set_single(uint8_t row, uint8_t column, uint8_t red, uint
 }
 
 bool wooting_rgb_array_set_full(const uint8_t* colors_buffer) {
+	//Just need to check if we believe it is connected, the update_keyboard call will ping the keyboard if it is necessary
+	if (!wooting_usb_get_meta()->connected) {
+		return false;
+	}
+
 	const uint8_t columns = wooting_usb_get_meta()->max_columns;
 
 	for (uint8_t row = 0; row < WOOTING_RGB_ROWS; row++) {
