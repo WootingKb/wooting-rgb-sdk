@@ -19,7 +19,6 @@ clean:
 	rm -f $(OBJS)
 
 install: libwooting-rgb-sdk.dylib
-	cp libwooting-rgb-sdk.dylib /usr/local/libwooting-rgb-sdk.dylib
-	cp libwooting-rgb-sdk.pc /usr/local/pkgconfig/libwooting-rgb-sdk.pc
+	cp libwooting-rgb-sdk.dylib /usr/local/lib/libwooting-rgb-sdk.dylib
 
 .PHONY: clean libs
