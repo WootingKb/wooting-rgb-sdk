@@ -2,7 +2,7 @@ all: libwooting-rgb-sdk.dylib
 
 CC ?= gcc
 CFLAGS ?= -Wall -g -fPIC
-
+CPPFLAGS ?= #-DDEBUG_LOG
 LDFLAGS ?= -Wall -g
 
 OBJS = ../src/wooting-rgb-sdk.o ../src/wooting-usb.o
@@ -13,7 +13,7 @@ libwooting-rgb-sdk.dylib: $(OBJS)
 	$(CC) $(LDFLAGS) $(LIBS) -shared -fPIC -Wl,-install_name,$0.0 $^ -o $@
 
 $(OBJS): %.o: %.c
-	$(CC) $(CFLAGS) -c $(INCLUDES) $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(INCLUDES) $< -o $@
 
 clean:
 	rm -f $(OBJS)
