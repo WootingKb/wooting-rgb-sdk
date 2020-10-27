@@ -1,5 +1,7 @@
 all: libwooting-rgb-sdk.so
 
+prefix ?= /usr/local
+
 CC ?= gcc
 CFLAGS ?= -Wall -g -fPIC
 
@@ -19,9 +21,9 @@ clean:
 	rm -f $(OBJS)
 
 install: libwooting-rgb-sdk.so
-	cp libwooting-rgb-sdk.so /usr/lib/libwooting-rgb-sdk.so
-	cp libwooting-rgb-sdk.pc /usr/lib/pkgconfig/libwooting-rgb-sdk.pc
-	cp ../src/wooting-rgb-sdk.h /usr/include/wooting-rgb-sdk.h
-	cp ../src/wooting-usb.h /usr/include/wooting-usb.h
+	cp libwooting-rgb-sdk.so $(prefix)/lib/libwooting-rgb-sdk.so
+	cp libwooting-rgb-sdk.pc $(prefix)/lib/pkgconfig/libwooting-rgb-sdk.pc
+	cp ../src/wooting-rgb-sdk.h $(prefix)/include/wooting-rgb-sdk.h
+	cp ../src/wooting-usb.h $(prefix)/include/wooting-usb.h
 
 .PHONY: clean libs
