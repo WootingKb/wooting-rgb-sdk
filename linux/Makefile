@@ -26,5 +26,9 @@ install: libwooting-rgb-sdk.so
 	cp libwooting-rgb-sdk.pc $(prefix)/lib/pkgconfig/libwooting-rgb-sdk.pc
 	cp ../src/wooting-rgb-sdk.h $(prefix)/include/wooting-rgb-sdk.h
 	cp ../src/wooting-usb.h $(prefix)/include/wooting-usb.h
+	chmod 755 $(prefix)/lib/libwooting-rgb-sdk.so
+	chmod 644 $(prefix)/lib/pkgconfig/libwooting-rgb-sdk.pc
+	chmod 644 $(prefix)/include/wooting-rgb-sdk.h
+	chmod 644 $(prefix)/include/wooting-usb.h
 
 .PHONY: clean libs
