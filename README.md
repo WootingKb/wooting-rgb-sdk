@@ -16,8 +16,8 @@ libusb-1.0, libusb-dev, hidapi, libhidapi-dev
 ```
 Additionally, you will need `pkg-config`, `git`, `make` and `gcc` to compile the Library.
 
-### Installing
-## Windows
+## Building / Installing
+#### Windows
 ```
 git clone --recursive https://github.com/WootingKb/wooting-rgb-sdk.git 
 ```
@@ -34,7 +34,7 @@ Now hit the build and find your DLL in the folder depending on your configuratio
 \wooting-rgb-sdk\windows\Release\wooting-rgb-sdk.dll
 ```
 
-## Linux
+#### Linux
 Clone the Git Repository:
 ```
 git clone https://github.com/WootingKb/wooting-rgb-sdk.git
@@ -43,7 +43,7 @@ Change into the Linux Directory using `cd wooting-rgb-sdk/linux` and simply run 
 
 If you wish to use the Library yourself it might be useful to install it to your System. Do so with `sudo make install`
 
-## Mac
+#### Mac
 Clone the Git Repository:
 ```
 git clone https://github.com/WootingKb/wooting-rgb-sdk.git
@@ -63,8 +63,3 @@ Keyboard matrix with rows and columns:
 ## License
 
 This project is licensed under the Mozilla Public License Version 2.0 - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-* Jeroen
-* Erik
