@@ -17,6 +17,14 @@ libusb-1.0, libusb-dev, hidapi, libhidapi-dev
 Additionally, you will need `pkg-config`, `git`, `make` and `gcc` to compile the Library.
 
 ## Building / Installing
+
+### Debugging
+
+You can add `DEBUG_LOG`to the preprocessor flag to build with debug logs enable. For Linux / Mac add: 
+```
+make CPPFLAGS=-DDEBUG_LOG
+```
+### Instructions
 #### Windows
 ```
 git clone --recursive https://github.com/WootingKb/wooting-rgb-sdk.git 
