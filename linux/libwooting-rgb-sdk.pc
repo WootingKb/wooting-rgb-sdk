@@ -7,4 +7,4 @@ Description: Wooting Keyboard RGB SDK
 Version: VERSION
 Requires: hidapi-libusb
 Cflags: -I${includedir}
-Libs: -L${libdir} -llibwooting-rgb-sdk
+Libs: -L${libdir} -lwooting-rgb-sdk
