@@ -20,7 +20,7 @@ Additionally, you will need `pkg-config`, `git`, `make` and `gcc` to compile the
 
 ### Debugging
 
-You can add `DEBUG_LOG`to the preprocessor flag to build with debug logs enable. For Linux / Mac add: 
+You can add `DEBUG_LOG`to the preprocessor flag to build with debug logs enabled. For Linux / Mac add: 
 ```
 make CPPFLAGS=-DDEBUG_LOG
 ```
