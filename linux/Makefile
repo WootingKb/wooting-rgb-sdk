@@ -22,6 +22,8 @@ clean:
 	rm -f $(OBJS)
 
 install: libwooting-rgb-sdk.so
+	mkdir -p $(prefix)/lib/pkgconfig
+	mkdir -p $(prefix)/include
 	cp libwooting-rgb-sdk.so $(prefix)/lib/libwooting-rgb-sdk.so
 	cp libwooting-rgb-sdk.pc $(prefix)/lib/pkgconfig/libwooting-rgb-sdk.pc
 	cp ../src/wooting-rgb-sdk.h $(prefix)/include/wooting-rgb-sdk.h
