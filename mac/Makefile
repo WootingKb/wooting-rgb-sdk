@@ -1,5 +1,7 @@
 all: libwooting-rgb-sdk.dylib
 
+prefix ?= /usr/local
+
 CC ?= gcc
 CFLAGS ?= -Wall -g -fPIC
 CPPFLAGS ?= #-DDEBUG_LOG
@@ -19,6 +21,6 @@ clean:
 	rm -f $(OBJS)
 
 install: libwooting-rgb-sdk.dylib
-	cp libwooting-rgb-sdk.dylib /usr/local/lib/libwooting-rgb-sdk.dylib
+	cp libwooting-rgb-sdk.dylib $(prefix)/lib/libwooting-rgb-sdk.dylib
 
 .PHONY: clean libs
