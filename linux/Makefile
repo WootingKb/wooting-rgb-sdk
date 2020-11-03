@@ -28,4 +28,10 @@ install: libwooting-rgb-sdk.so
 	cp ../src/wooting-rgb-sdk.h $(prefix)/include/wooting-rgb-sdk.h
 	cp ../src/wooting-usb.h $(prefix)/include/wooting-usb.h
 
-.PHONY: clean libs
+uninstall:
+	rm -f $(prefix)/lib/libwooting-rgb-sdk.so
+	rm -f $(prefix)/lib/pkgconfig/libwooting-rgb-sdk.pc
+	rm -f $(prefix)/include/wooting-rgb-sdk.h
+	rm -f $(prefix)/include/wooting-usb.h
+
+.PHONY: clean libs uninstall
