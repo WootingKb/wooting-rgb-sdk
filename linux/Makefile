@@ -5,7 +5,6 @@ prefix ?= /usr/local
 CC ?= gcc
 CFLAGS ?= -Wall -g -fPIC
 CPPFLAGS ?= #-DDEBUG_LOG
-
 LDFLAGS ?= -Wall -g -Wl,--no-as-needed
 
 OBJS = ../src/wooting-rgb-sdk.o ../src/wooting-usb.o
