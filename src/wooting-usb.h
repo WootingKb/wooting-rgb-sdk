@@ -54,7 +54,7 @@ void wooting_usb_disconnect(bool trigger_cb);
 
 bool wooting_usb_find_keyboard(void);
 
-WOOTING_USB_META *wooting_usb_get_meta();
+WOOTING_USB_META *wooting_usb_get_meta(void);
 
 bool wooting_usb_send_buffer(RGB_PARTS part_number, uint8_t rgb_buffer[]);
 bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0,

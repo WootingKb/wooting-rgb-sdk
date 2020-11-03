@@ -177,7 +177,7 @@ This function returns a pointer to a struct which provides various relevant deta
 @returns
 This functions returns a pointer to a `WOOTING_USB_META` struct which contains relevant Device Information
 */
-WOOTINGRGBSDK_API const WOOTING_USB_META* wooting_rgb_device_info();
+WOOTINGRGBSDK_API const WOOTING_USB_META* wooting_rgb_device_info(void);
 
 #ifdef __cplusplus
 }
