@@ -22,7 +22,7 @@ clean:
 
 install: libwooting-rgb-sdk.dylib
 	mkdir -p $(prefix)/lib
-	cp libwooting-rgb-sdk.dylib $(prefix)/lib/libwooting-rgb-sdk.dylib
+	cp libwooting-rgb-sdk.dylib $(prefix)/lib
 	chmod 755 $(prefix)/lib/libwooting-rgb-sdk.dylib
 
 uninstall:
