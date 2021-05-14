@@ -73,7 +73,7 @@ static uint8_t get_safe_led_idex(uint8_t row, uint8_t column) {
 	}
 }
 
-static __always_inline uint16_t encodeColor(uint8_t red, uint8_t green, uint8_t blue) 
+static inline uint16_t encodeColor(uint8_t red, uint8_t green, uint8_t blue) 
 {
 	uint16_t encode = 0;
 
