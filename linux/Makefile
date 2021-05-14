@@ -8,8 +8,8 @@ CPPFLAGS ?= #-DDEBUG_LOG
 LDFLAGS ?= -Wall -g -Wl,--no-as-needed
 
 OBJS = ../src/wooting-rgb-sdk.o ../src/wooting-usb.o
-LIBS = `pkg-config libusb-1.0 --libs` `pkg-config hidapi-libusb --libs`
-INCLUDES ?= `pkg-config hidapi-libusb --cflags` -I../src `pkg-config libusb-1.0 --cflags`
+LIBS =  `pkg-config hidapi-hidraw --libs`
+INCLUDES ?= `pkg-config hidapi-hidraw --cflags` -I../src 
 
 libwooting-rgb-sdk.so: $(OBJS)
 	$(CC) $(LDFLAGS) $(LIBS) -shared -fPIC -Wl,-soname,$0.0 $^ -o $@
