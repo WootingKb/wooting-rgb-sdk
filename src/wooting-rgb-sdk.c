@@ -107,6 +107,10 @@ bool wooting_rgb_close() {
 	}
 }
 
+bool wooting_rgb_reset() {
+	return wooting_rgb_close();
+}
+
 bool wooting_rgb_direct_set_key(uint8_t row, uint8_t column, uint8_t red, uint8_t green, uint8_t blue) {
 	// We don't need to call this here as the wooting_usb_send_feature calls will perform the check again and there's no need to
 	// run this multiple times, especially when each call will attempt to ensure connection is still available
