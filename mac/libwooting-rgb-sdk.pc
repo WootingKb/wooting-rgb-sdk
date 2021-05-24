@@ -1,0 +1,10 @@
+prefix=/usr/local
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: libwooting-rgb-sdk
+Description: Wooting Keyboard RGB SDK
+Version: VERSION
+Requires: hidapi
+Cflags: -I${includedir}
+Libs: -L${libdir} -lwooting-rgb-sdk
