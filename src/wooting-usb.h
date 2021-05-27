@@ -7,6 +7,21 @@
  */
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifdef _WIN32
+#ifdef WOOTINGRGBSDK_EXPORTS  
+#define WOOTINGRGBSDK_API __declspec(dllexport)   
+#else  
+#define WOOTINGRGBSDK_API __declspec(dllimport)   
+#endif
+#else
+// __declspec is win32 only
+#define WOOTINGRGBSDK_API
+#endif
+
 #ifdef DEBUG_LOG
 #include <stdio.h>
 #endif
@@ -55,16 +70,20 @@ typedef struct _KeyboardMatrixID {
 #define WOOTING_RESET_ALL_COMMAND 32
 #define WOOTING_COLOR_INIT_COMMAND 33
 
-void wooting_usb_set_disconnected_cb(void_cb cb);
-void wooting_usb_disconnect(bool trigger_cb);
+WOOTINGRGBSDK_API void wooting_usb_set_disconnected_cb(void_cb cb);
+WOOTINGRGBSDK_API void wooting_usb_disconnect(bool trigger_cb);
 
-bool wooting_usb_find_keyboard(void);
+WOOTINGRGBSDK_API bool wooting_usb_find_keyboard(void);
 
-WOOTING_USB_META *wooting_usb_get_meta(void);
-bool wooting_usb_use_v2_interface(void);
+WOOTINGRGBSDK_API WOOTING_USB_META *wooting_usb_get_meta(void);
+WOOTINGRGBSDK_API bool wooting_usb_use_v2_interface(void);
 
-bool wooting_usb_send_buffer_v1(RGB_PARTS part_number, uint8_t rgb_buffer[]);
-bool wooting_usb_send_buffer_v2(uint16_t rgb_buffer[WOOTING_RGB_ROWS][WOOTING_RGB_COLS]);
-bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0,
+WOOTINGRGBSDK_API bool wooting_usb_send_buffer_v1(RGB_PARTS part_number, uint8_t rgb_buffer[]);
+WOOTINGRGBSDK_API bool wooting_usb_send_buffer_v2(uint16_t rgb_buffer[WOOTING_RGB_ROWS][WOOTING_RGB_COLS]);
+WOOTINGRGBSDK_API bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0,
                               uint8_t parameter1, uint8_t parameter2,
                               uint8_t parameter3);
+
+#ifdef __cplusplus
+}
+#endif
