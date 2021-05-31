@@ -434,3 +434,29 @@ bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0, uint8_t par
 		return false;
 	}
 }
+
+void wooting_usb_read_response_timeout(uint8_t *buff, size_t len, int milliseconds)
+{
+	int result = hid_read_timeout(keyboard_handle, buff, len, milliseconds);
+#ifdef DEBUG_LOGs
+	printf("Read_timeout result \n");
+	for(int i = 0; i < len; i++ )
+	{
+		printf("%d", buff[i]);
+	}
+	printf("\n");
+#endif
+}
+
+void wooting_usb_read_response(uint8_t *buff, size_t len)
+{
+	int result = hid_read(keyboard_handle, buff, len);
+#ifdef DEBUG_LOGs
+	printf("Read_timeout result \n");
+	for(int i = 0; i < len; i++ )
+	{
+		printf("%d", buff[i]);
+	}
+	printf("\n");
+#endif
+}
