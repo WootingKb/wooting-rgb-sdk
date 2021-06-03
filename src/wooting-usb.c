@@ -406,6 +406,8 @@ bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0, uint8_t par
 		return false;
 	}
 
+	printf("Sending feature: %d\n", commandId);
+
 	uint8_t report_buffer[WOOTING_COMMAND_SIZE];
 
 	report_buffer[0] = 0; // HID report index (unused)
@@ -435,28 +437,66 @@ bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0, uint8_t par
 	}
 }
 
-void wooting_usb_read_response_timeout(uint8_t *buff, size_t len, int milliseconds)
-{
-	int result = hid_read_timeout(keyboard_handle, buff, len, milliseconds);
-#ifdef DEBUG_LOGs
-	printf("Read_timeout result \n");
-	for(int i = 0; i < len; i++ )
-	{
-		printf("%d", buff[i]);
+int wooting_usb_send_feature_with_response(uint8_t *buff, size_t len, uint8_t commandId, uint8_t parameter0, uint8_t parameter1, uint8_t parameter2, uint8_t parameter3) {
+	if (!wooting_usb_find_keyboard()) {
+		return -1;
 	}
-	printf("\n");
-#endif
+
+	printf("Sending feature with response: %d\n", commandId);
+
+	uint8_t report_buffer[WOOTING_COMMAND_SIZE];
+
+	report_buffer[0] = 0; // HID report index (unused)
+	report_buffer[1] = 0xD0; // Magic word
+	report_buffer[2] = 0xDA; // Magic word
+	report_buffer[3] = commandId;
+	report_buffer[4] = parameter3;
+	report_buffer[5] = parameter2;
+	report_buffer[6] = parameter1;
+	report_buffer[7] = parameter0;
+	int command_size = hid_send_feature_report(keyboard_handle, report_buffer, WOOTING_COMMAND_SIZE);
+
+	int result = wooting_usb_read_response(buff, len);
+
+	if (command_size == WOOTING_COMMAND_SIZE) {
+		return result;
+	}
+	else {
+		#ifdef DEBUG_LOG
+		printf("Got command size: %d, expected: %d, disconnecting..\n", command_size, WOOTING_COMMAND_SIZE);
+		#endif
+
+		wooting_usb_disconnect(true);
+		return -1;
+	}
 }
 
-void wooting_usb_read_response(uint8_t *buff, size_t len)
+int wooting_usb_read_response_timeout(uint8_t *buff, size_t len, int milliseconds)
 {
-	int result = hid_read(keyboard_handle, buff, len);
-#ifdef DEBUG_LOGs
-	printf("Read_timeout result \n");
+	int result = hid_read_timeout(keyboard_handle, buff, len, milliseconds);
+	#ifdef DEBUG_LOGs
+	printf("hid_read result code: %d", result);
+	printf("Buffer content \n");
 	for(int i = 0; i < len; i++ )
 	{
-		printf("%d", buff[i]);
+		printf("%d%s", buff[i], i < len-1 ? ", " : "");
 	}
 	printf("\n");
-#endif
+	#endif
+	return result;
+}
+
+int wooting_usb_read_response(uint8_t *buff, size_t len)
+{
+	int result = hid_read(keyboard_handle, buff, len);
+	#ifdef DEBUG_LOGs
+	printf("hid_read result code: %d", result);
+	printf("Buffer content \n");
+	for(int i = 0; i < len; i++ )
+	{
+		printf("%d%s", buff[i], i < len-1 ? ", " : "");
+	}
+	printf("\n");
+	#endif
+	return result;
 }
