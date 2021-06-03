@@ -406,7 +406,9 @@ bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0, uint8_t par
 		return false;
 	}
 
+	#ifdef DEBUG_LOG
 	printf("Sending feature: %d\n", commandId);
+	#endif
 
 	uint8_t report_buffer[WOOTING_COMMAND_SIZE];
 
@@ -442,7 +444,9 @@ int wooting_usb_send_feature_with_response(uint8_t *buff, size_t len, uint8_t co
 		return -1;
 	}
 
+	#ifdef DEBUG_LOG
 	printf("Sending feature with response: %d\n", commandId);
+	#endif
 
 	uint8_t report_buffer[WOOTING_COMMAND_SIZE];
 
