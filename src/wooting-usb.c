@@ -10,6 +10,7 @@
 #include "string.h"
 #include "wooting-usb.h"
 #include "hidapi.h"
+#include "stdlib.h"
 
 #define WOOTING_COMMAND_SIZE 8
 #define WOOTING_REPORT_SIZE 128+1
@@ -440,8 +441,9 @@ bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0, uint8_t par
 	size_t response_size = wooting_usb_get_response_size();
 
 	// Just read the response and discard it 
-	uint8_t buff[response_size];
+	uint8_t* buff = (uint8_t*) calloc(response_size, sizeof(uint8_t));
 	int result = wooting_usb_read_response(buff, response_size);
+	free(buff);
 	#ifdef DEBUG_LOG
 	printf("Read result %d \n", result);
 	#endif
@@ -471,17 +473,20 @@ int wooting_usb_send_feature_with_response(uint8_t *buff, size_t len, uint8_t co
 	int command_size = wooting_usb_send_feature_buff(commandId, parameter0, parameter1, parameter2, parameter3);
 	if (command_size == WOOTING_COMMAND_SIZE) {
 		size_t response_size = wooting_usb_get_response_size();
-		uint8_t responseBuff[response_size];
+		uint8_t* responseBuff = (uint8_t*) calloc(response_size, sizeof(uint8_t));
+
 		int result = wooting_usb_read_response(responseBuff, response_size);
 
 		if (result == response_size) {
 			memcpy(buff, responseBuff, len);
+			free(responseBuff);
 			return result;
 		} else {
 			#ifdef DEBUG_LOG
 			printf("Got response size: %d, expected: %d, disconnecting..\n", result, (int)response_size);
 			#endif
 
+			free(responseBuff);
 			wooting_usb_disconnect(true);
 			return -1;
 		}
