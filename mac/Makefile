@@ -22,13 +22,17 @@ clean:
 
 install: libwooting-rgb-sdk.dylib
 	mkdir -p $(prefix)/lib
-	cp libwooting-rgb-sdk.dylib $(prefix)/lib
+	cp libwooting-rgb-sdk.dylib $(prefix)/lib/
 	chmod 755 $(prefix)/lib/libwooting-rgb-sdk.dylib
-	cp libwooting-rgb-sdk.pc $(prefix)/lib/pkgconfig
+
+	mkdir -p $(prefix)/lib/pkgconfig
+	cp libwooting-rgb-sdk.pc $(prefix)/lib/pkgconfig/
 	chmod 644 $(prefix)/lib/pkgconfig/libwooting-rgb-sdk.pc
-	cp ../src/wooting-rgb-sdk.h $(prefix)/include
+
+	mkdir -p $(prefix)/include
+	cp ../src/wooting-rgb-sdk.h $(prefix)/include/
 	chmod 644 $(prefix)/include/wooting-rgb-sdk.h
-	cp ../src/wooting-usb.h $(prefix)/include
+	cp ../src/wooting-usb.h $(prefix)/include/
 	chmod 644 $(prefix)/include/wooting-usb.h
 
 uninstall:
