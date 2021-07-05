@@ -71,12 +71,12 @@ typedef struct _KeyboardMatrixID {
 #define WOOTING_RESET_ALL_COMMAND 32
 #define WOOTING_COLOR_INIT_COMMAND 33
 
-WOOTINGRGBSDK_API void wooting_usb_set_disconnected_cb(void_cb cb);
-WOOTINGRGBSDK_API void wooting_usb_disconnect(bool trigger_cb);
+void wooting_usb_set_disconnected_cb(void_cb cb);
+void wooting_usb_disconnect(bool trigger_cb);
 
-WOOTINGRGBSDK_API bool wooting_usb_find_keyboard(void);
+bool wooting_usb_find_keyboard(void);
 
-WOOTINGRGBSDK_API WOOTING_USB_META *wooting_usb_get_meta(void);
+WOOTING_USB_META *wooting_usb_get_meta(void);
 WOOTINGRGBSDK_API bool wooting_usb_use_v2_interface(void);
 WOOTINGRGBSDK_API size_t wooting_usb_get_response_size(void);
 
