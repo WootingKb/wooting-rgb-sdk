@@ -68,7 +68,7 @@ static void reset_meta() {
 
 
 static void set_meta_wooting_one() {
-	wooting_usb_meta.model = "Wooting one";
+	wooting_usb_meta.model = "Wooting One";
 	wooting_usb_meta.device_type = DEVICE_KEYBOARD_TKL;
 	wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
 	wooting_usb_meta.max_columns = WOOTING_ONE_RGB_COLS;
@@ -77,7 +77,7 @@ static void set_meta_wooting_one() {
 }
 
 static void set_meta_wooting_two() {
-	wooting_usb_meta.model = "Wooting two";
+	wooting_usb_meta.model = "Wooting Two";
 	wooting_usb_meta.device_type = DEVICE_KEYBOARD;
 	wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
 	wooting_usb_meta.max_columns = WOOTING_TWO_RGB_COLS;
