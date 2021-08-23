@@ -24,7 +24,7 @@ Additionally, you will need `pkg-config`, `git`, `make` and `gcc` to compile the
 
 #### Mac
 
-Dependencies: `hidapi`, `make`, `pkg-config`, `gcc` or `clang` through `xcode`
+Dependencies: `hidapi`, `make`, `pkg-config`, `gcc` (or `clang` through `xcode`)
 If you have [homebrew](https://brew.sh/) set up then this command should get you sorted with most dependencies:
 
 ```
