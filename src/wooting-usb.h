@@ -7,9 +7,25 @@
  */
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifdef _WIN32
+#ifdef WOOTINGRGBSDK_EXPORTS  
+#define WOOTINGRGBSDK_API __declspec(dllexport)   
+#else  
+#define WOOTINGRGBSDK_API __declspec(dllimport)   
+#endif
+#else
+// __declspec is win32 only
+#define WOOTINGRGBSDK_API
+#endif
+
 #ifdef DEBUG_LOG
 #include <stdio.h>
 #endif
+#include <stddef.h>
 
 typedef void (*void_cb)(void);
 
@@ -30,8 +46,13 @@ typedef struct WOOTING_USB_META {
   uint8_t max_columns;
   uint8_t led_index_max;
   WOOTING_DEVICE_TYPE device_type;
-
+  bool v2_interface;
 } WOOTING_USB_META;
+
+typedef struct _KeyboardMatrixID {
+  uint8_t column : 5;
+  uint8_t row : 3;
+} KeyboardMatrixID;
 
 #define RGB_RAW_BUFFER_SIZE 96
 
@@ -42,6 +63,7 @@ typedef struct WOOTING_USB_META {
 
 #define WOOTING_ONE_KEY_CODE_LIMIT 95
 #define WOOTING_TWO_KEY_CODE_LIMIT 116
+#define WOOTING_KEY_CODE_LIMIT WOOTING_TWO_KEY_CODE_LIMIT
 
 #define WOOTING_RAW_COLORS_REPORT 11
 #define WOOTING_SINGLE_COLOR_COMMAND 30
@@ -55,8 +77,21 @@ void wooting_usb_disconnect(bool trigger_cb);
 bool wooting_usb_find_keyboard(void);
 
 WOOTING_USB_META *wooting_usb_get_meta(void);
+WOOTINGRGBSDK_API bool wooting_usb_use_v2_interface(void);
+WOOTINGRGBSDK_API size_t wooting_usb_get_response_size(void);
 
-bool wooting_usb_send_buffer(RGB_PARTS part_number, uint8_t rgb_buffer[]);
-bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0,
+WOOTINGRGBSDK_API bool wooting_usb_send_buffer_v1(RGB_PARTS part_number, uint8_t rgb_buffer[]);
+WOOTINGRGBSDK_API bool wooting_usb_send_buffer_v2(uint16_t rgb_buffer[WOOTING_RGB_ROWS][WOOTING_RGB_COLS]);
+WOOTINGRGBSDK_API bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0,
                               uint8_t parameter1, uint8_t parameter2,
                               uint8_t parameter3);
+WOOTINGRGBSDK_API int wooting_usb_send_feature_with_response(uint8_t *buff, size_t len, uint8_t commandId,
+                              uint8_t parameter0, uint8_t parameter1,
+                              uint8_t parameter2, uint8_t parameter3);
+
+WOOTINGRGBSDK_API int wooting_usb_read_response_timeout(uint8_t *buff, size_t len, int milliseconds);
+WOOTINGRGBSDK_API int wooting_usb_read_response(uint8_t *buff, size_t len);
+
+#ifdef __cplusplus
+}
+#endif
