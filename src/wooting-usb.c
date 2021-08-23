@@ -257,11 +257,10 @@ bool wooting_usb_find_keyboard() {
 		hid_info_walker = hid_info_walker->next;
 	}
 	#else 
-	// The amount of interfaces is variable, so we need to look for the configuration interface
-	// In the Wooting one keyboard the configuration interface is always 4 lower than the highest number
+	// We can just search for the interface with matching custom Wooting Cfg usage page
 	struct hid_device_info* hid_info_walker = hid_info;
 	while (hid_info_walker) {
-			#ifdef DEBUG_LOG
+		#ifdef DEBUG_LOG
 		printf("Found interface No: %d\n", hid_info_walker->interface_number);
 		printf("Found usage page: %d\n", hid_info_walker->usage_page);
 		#endif
@@ -275,7 +274,7 @@ bool wooting_usb_find_keyboard() {
 				#ifdef DEBUG_LOG
 				printf("Found keyboard_handle: %s\n", hid_info_walker->path);
 				#endif
-				// Once the keyboard is found send an init command and abuse two reads to make a 50 ms delay to make sure the keyboard is ready
+				// Once the keyboard is found send an init command
 				#ifdef DEBUG_LOG
 				bool result = 
 				#endif
@@ -283,9 +282,6 @@ bool wooting_usb_find_keyboard() {
 				#ifdef DEBUG_LOG
 				printf("Color init result: %d\n", result);
 				#endif
-				// unsigned char stub = 0;
-				// hid_read(keyboard_handle, &stub, 0);
-				// hid_read_timeout(keyboard_handle, &stub, 0, 50);
 				
 				keyboard_found = true;
 			} else {
