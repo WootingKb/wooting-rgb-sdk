@@ -39,6 +39,11 @@ typedef enum WOOTING_DEVICE_TYPE {
   DEVICE_KEYBOARD = 2
 } WOOTING_DEVICE_TYPE;
 
+typedef enum WOOTING_DEVICE_LAYOUT {
+  LAYOUT_ANSI = 0,
+  LAYOUT_ISO = 1
+} WOOTING_DEVICE_LAYOUT;
+
 typedef struct WOOTING_USB_META {
   bool connected;
   const char *model;
@@ -47,6 +52,7 @@ typedef struct WOOTING_USB_META {
   uint8_t led_index_max;
   WOOTING_DEVICE_TYPE device_type;
   bool v2_interface;
+  WOOTING_DEVICE_LAYOUT layout;
 } WOOTING_USB_META;
 
 typedef struct _KeyboardMatrixID {
@@ -66,6 +72,7 @@ typedef struct _KeyboardMatrixID {
 #define WOOTING_KEY_CODE_LIMIT WOOTING_TWO_KEY_CODE_LIMIT
 
 #define WOOTING_RAW_COLORS_REPORT 11
+#define WOOTING_DEVICE_CONFIG_COMMAND 19
 #define WOOTING_SINGLE_COLOR_COMMAND 30
 #define WOOTING_SINGLE_RESET_COMMAND 31
 #define WOOTING_RESET_ALL_COMMAND 32

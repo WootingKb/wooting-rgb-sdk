@@ -278,6 +278,11 @@ bool wooting_usb_find_keyboard() {
 				#ifdef DEBUG_LOG
 				bool result = 
 				#endif
+				uint8_t buff[100];
+				int result = wooting_usb_send_feature_with_response(buff, sizeof(buff), WOOTING_DEVICE_CONFIG_COMMAND, 0, 0, 0, 0);
+				printf("Device config result: %d\n", result);
+				printf("Layout result: %d\n", buff[5]);
+
 				wooting_usb_send_feature(WOOTING_COLOR_INIT_COMMAND, 0, 0, 0, 0);
 				#ifdef DEBUG_LOG
 				printf("Color init result: %d\n", result);
