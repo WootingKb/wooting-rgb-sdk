@@ -354,3 +354,7 @@ const WOOTING_USB_META* wooting_rgb_device_info() {
 	if (!wooting_usb_get_meta()->connected) wooting_usb_find_keyboard();
 	return wooting_usb_get_meta();
 }
+
+WOOTING_DEVICE_LAYOUT wooting_rgb_device_layout(void) {
+	return wooting_usb_get_meta()->layout;
+}
