@@ -64,6 +64,7 @@ static void reset_meta() {
 	wooting_usb_meta.max_columns = 0;
 	wooting_usb_meta.led_index_max = 0;
 	wooting_usb_meta.v2_interface = false;
+	wooting_usb_meta.layout = LAYOUT_UNKNOWN;
 }
 
 
@@ -134,6 +135,28 @@ void wooting_usb_disconnect(bool trigger_cb) {
 
 void wooting_usb_set_disconnected_cb(void_cb cb) {
 	disconnected_callback = cb;
+}
+
+WOOTING_DEVICE_LAYOUT wooting_usb_get_layout() {
+	uint8_t buff[20];
+	int result = wooting_usb_send_feature_with_response(buff, sizeof(buff), WOOTING_DEVICE_CONFIG_COMMAND, 0, 0, 0, 0);
+	if (result != -1) {
+		uint8_t index = wooting_usb_use_v2_interface() ? 10 : 9;
+		uint8_t layout = buff[index];
+		#ifdef DEBUG_LOG
+		printf("Layout result: %d, %d\n", layout, index);
+		#endif
+		if (layout <= LAYOUT_ISO)
+			return (WOOTING_DEVICE_LAYOUT)layout;
+		else { 
+			printf("Unknown device layout found %d\n", layout);
+			return LAYOUT_UNKNOWN;
+		}
+	}else {
+		printf("Failed to get device config info for layout detection, result: %d\n", result);
+	}
+
+	return LAYOUT_UNKNOWN;
 }
 
 bool wooting_usb_find_keyboard() {
@@ -257,6 +280,7 @@ bool wooting_usb_find_keyboard() {
 		hid_info_walker = hid_info_walker->next;
 	}
 	#else 
+
 	// We can just search for the interface with matching custom Wooting Cfg usage page
 	struct hid_device_info* hid_info_walker = hid_info;
 	while (hid_info_walker) {
@@ -273,14 +297,6 @@ bool wooting_usb_find_keyboard() {
 			if (keyboard_handle) {
 				#ifdef DEBUG_LOG
 				printf("Found keyboard_handle: %s\n", hid_info_walker->path);
-				#endif
-				// Once the keyboard is found send an init command
-				#ifdef DEBUG_LOG
-				bool result = 
-				#endif
-				wooting_usb_send_feature(WOOTING_COLOR_INIT_COMMAND, 0, 0, 0, 0);
-				#ifdef DEBUG_LOG
-				printf("Color init result: %d\n", result);
 				#endif
 				
 				keyboard_found = true;
@@ -301,6 +317,19 @@ bool wooting_usb_find_keyboard() {
 	if (keyboard_found){
 		meta_func();
 		wooting_usb_meta.connected = true;
+
+		// Any feature sends need to be done after the meta is set so the correct value for v2_interface is set
+
+		// Once the keyboard is found send an init command
+		#ifdef DEBUG_LOG
+		bool result = 
+		#endif
+		wooting_usb_send_feature(WOOTING_COLOR_INIT_COMMAND, 0, 0, 0, 0);
+		#ifdef DEBUG_LOG
+		printf("Color init result: %d\n", result);
+		#endif
+
+		wooting_usb_meta.layout = wooting_usb_get_layout();
 	}
 	#ifdef DEBUG_LOG
 	printf("Finished looking for keyboard returned: %d\n", keyboard_found);
@@ -497,7 +526,7 @@ int wooting_usb_send_feature_with_response(uint8_t *buff, size_t len, uint8_t co
 }
 
 static void debug_print_buffer(uint8_t *buff, size_t len) {
-	#ifdef DEBUG_LOGs
+	#ifdef DEBUG_LOG
 	printf("Buffer content \n");
 	for(int i = 0; i < len; i++ )
 	{
@@ -510,8 +539,8 @@ static void debug_print_buffer(uint8_t *buff, size_t len) {
 int wooting_usb_read_response_timeout(uint8_t *buff, size_t len, int milliseconds)
 {
 	int result = hid_read_timeout(keyboard_handle, buff, len, milliseconds);
-	#ifdef DEBUG_LOGs
-	printf("hid_read_timeout result code: %d", result);
+	#ifdef DEBUG_LOG
+	printf("hid_read_timeout result code: %d\n", result);
 	#endif
 	debug_print_buffer(buff, len);
 	return result;
@@ -520,8 +549,8 @@ int wooting_usb_read_response_timeout(uint8_t *buff, size_t len, int millisecond
 int wooting_usb_read_response(uint8_t *buff, size_t len)
 {
 	int result = hid_read(keyboard_handle, buff, len);
-	#ifdef DEBUG_LOGs
-	printf("hid_read result code: %d", result);
+	#ifdef DEBUG_LOG
+	printf("hid_read result code: %d\n", result);
 	#endif
 	debug_print_buffer(buff, len);
 	return result;
