@@ -23,6 +23,7 @@
 
 #define WOOTING_ONE_PID 0xFF01
 #define WOOTING_ONE_V2_PID 0x1100
+// Every keyboard can have an alternative PID for gamepad driver compatibility (indicated by X)
 #define WOOTING_ONE_V2_PIDX 0x1101
 
 #define WOOTING_TWO_PID 0xFF02
