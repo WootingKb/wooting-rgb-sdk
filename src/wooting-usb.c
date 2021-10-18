@@ -17,12 +17,25 @@
 #define WOOTING_V2_REPORT_SIZE 256+1
 #define WOOTING_V1_RESPONSE_SIZE 128
 #define WOOTING_V2_RESPONSE_SIZE 256
+
 #define WOOTING_VID 0x03EB
 #define WOOTING_VID2 0x31e3
+
 #define WOOTING_ONE_PID 0xFF01
+#define WOOTING_ONE_V2_PID 0x1100
+// Every keyboard can have an alternative PID for gamepad driver compatibility (indicated by X)
+#define WOOTING_ONE_V2_PIDX 0x1101
+
 #define WOOTING_TWO_PID 0xFF02
+#define WOOTING_TWO_V2_PID 0x1200
+#define WOOTING_TWO_V2_PIDX 0x1201
+
 #define WOOTING_TWO_LE_PID 0x1210
+#define WOOTING_TWO_LE_PIDX 0x1211
+
 #define WOOTING_TWO_HE_PID 0x1220
+#define WOOTING_TWO_HE_PIDX 0x1221
+
 #define CFG_USAGE_PAGE 0x1337
 
 static WOOTING_USB_META wooting_usb_meta;
@@ -77,6 +90,11 @@ static void set_meta_wooting_one() {
 	wooting_usb_meta.v2_interface = false;
 }
 
+static void set_meta_wooting_one_v2() {
+	set_meta_wooting_one();
+	wooting_usb_meta.v2_interface = true;
+}
+
 static void set_meta_wooting_two() {
 	wooting_usb_meta.model = "Wooting Two";
 	wooting_usb_meta.device_type = DEVICE_KEYBOARD;
@@ -84,6 +102,11 @@ static void set_meta_wooting_two() {
 	wooting_usb_meta.max_columns = WOOTING_TWO_RGB_COLS;
 	wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
 	wooting_usb_meta.v2_interface = false;
+}
+
+static void set_meta_wooting_two_v2() {
+	set_meta_wooting_two();
+	wooting_usb_meta.v2_interface = true;
 }
 
 static void set_meta_wooting_two_le() {
@@ -194,20 +217,36 @@ bool wooting_usb_find_keyboard() {
 		printf("Enumerate on Wooting One Successful\n");
 		#endif
 		meta_func = set_meta_wooting_one;
+	} 
+	else if ((hid_info = hid_enumerate(WOOTING_VID2, WOOTING_ONE_V2_PID)) != NULL
+			|| (hid_info = hid_enumerate(WOOTING_VID2, WOOTING_ONE_V2_PIDX)) != NULL) {
+		#ifdef DEBUG_LOG
+		printf("Enumerate on Wooting One (V2) Successful\n");
+		#endif
+		meta_func = set_meta_wooting_one_v2;
 	}
 	else if ((hid_info = hid_enumerate(WOOTING_VID, WOOTING_TWO_PID)) != NULL) {
 		#ifdef DEBUG_LOG
 		printf("Enumerate on Wooting Two Successful\n");
 		#endif
 		meta_func = set_meta_wooting_two;
+	} 
+	else if ((hid_info = hid_enumerate(WOOTING_VID2, WOOTING_TWO_V2_PID)) != NULL
+			|| (hid_info = hid_enumerate(WOOTING_VID2, WOOTING_TWO_V2_PIDX)) != NULL) {
+		#ifdef DEBUG_LOG
+		printf("Enumerate on Wooting Two (V2) Successful\n");
+		#endif
+		meta_func = set_meta_wooting_two_v2;
 	}
-	else if ((hid_info = hid_enumerate(WOOTING_VID2, WOOTING_TWO_LE_PID)) != NULL) {
+	else if ((hid_info = hid_enumerate(WOOTING_VID2, WOOTING_TWO_LE_PID)) != NULL
+			 || (hid_info = hid_enumerate(WOOTING_VID2, WOOTING_TWO_LE_PIDX)) != NULL) {
 		#ifdef DEBUG_LOG
 		printf("Enumerate on Wooting Two Lekker Edition Successful\n");
 		#endif
 		meta_func = set_meta_wooting_two_le;
 	}
-	else if ((hid_info = hid_enumerate(WOOTING_VID2, WOOTING_TWO_HE_PID)) != NULL) {
+	else if ((hid_info = hid_enumerate(WOOTING_VID2, WOOTING_TWO_HE_PID)) != NULL
+			 || (hid_info = hid_enumerate(WOOTING_VID2, WOOTING_TWO_HE_PIDX)) != NULL) {
 		#ifdef DEBUG_LOG
 		printf("Enumerate on Wooting Two HE Successful\n");
 		#endif
