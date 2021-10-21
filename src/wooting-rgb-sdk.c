@@ -1,12 +1,10 @@
 /*
-* Copyright 2018 Wooting Technologies B.V.
-*
-* This Source Code Form is subject to the terms of the Mozilla Public
-* License, v. 2.0. If a copy of the MPL was not distributed with this
-* file, You can obtain one at http://mozilla.org/MPL/2.0/.
-*/
-#include "stdbool.h"
-#include "stdint.h"
+ * Copyright 2018 Wooting Technologies B.V.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 #include "wooting-rgb-sdk.h"
 
 #define NOLED 255
@@ -19,11 +17,11 @@ static bool wooting_rgb_auto_update = false;
 
 // Each rgb buffer is able to hold RGB values for 24 keys
 // There is some overhead because of the memory layout of the LED drivers
-static uint8_t rgb_buffer0[RGB_RAW_BUFFER_SIZE] = { 0 };
-static uint8_t rgb_buffer1[RGB_RAW_BUFFER_SIZE] = { 0 };
-static uint8_t rgb_buffer2[RGB_RAW_BUFFER_SIZE] = { 0 };
-static uint8_t rgb_buffer3[RGB_RAW_BUFFER_SIZE] = { 0 };
-static uint8_t rgb_buffer4[RGB_RAW_BUFFER_SIZE] = { 0 };
+static uint8_t rgb_buffer0[RGB_RAW_BUFFER_SIZE] = {0};
+static uint8_t rgb_buffer1[RGB_RAW_BUFFER_SIZE] = {0};
+static uint8_t rgb_buffer2[RGB_RAW_BUFFER_SIZE] = {0};
+static uint8_t rgb_buffer3[RGB_RAW_BUFFER_SIZE] = {0};
+static uint8_t rgb_buffer4[RGB_RAW_BUFFER_SIZE] = {0};
 
 static bool rgb_buffer0_changed = false;
 static bool rgb_buffer1_changed = false;
@@ -56,305 +54,309 @@ static bool rgb_buffer_matrix_changed = false;
 
 // Converts the array index to a memory location in the RGB buffers
 static uint8_t get_safe_led_idex(uint8_t row, uint8_t column) {
-	const uint8_t rgb_led_index[WOOTING_RGB_ROWS][WOOTING_RGB_COLS] = {
-		{ 0, NOLED, 11, 12, 23, 24, 36, 47, 85, 84, 49, 48, 59, 61, 73, 81, 80, 113, 114, 115, 116 },
-		{ 2, 1, 14, 13, 26, 25, 35, 38, 37, 87, 86, 95, 51, 63, 75, 72, 74, 96, 97, 98, 99 },
-		{ 3, 4, 15, 16, 27, 28, 39, 42, 40, 88, 89, 52, 53, 71, 76, 83, 77, 102, 103, 104, 100 },
-		{ 5, 6, 17, 18, 29, 30, 41, 46, 44, 90, 93, 54, 57, 65, NOLED, NOLED, NOLED, 105, 106, 107, NOLED },
-		{ 9, 8, 19, 20, 31, 34, 32, 45, 43, 91, 92, 55, NOLED, 66, NOLED, 78, NOLED, 108, 109, 110, 101 },
-		{ 10, 22, 21, NOLED, NOLED, NOLED, 33, NOLED, NOLED, NOLED, 94, 58, 67, 68, 70, 79, 82, NOLED, 111, 112, NOLED }
-	};
+  const uint8_t rgb_led_index[WOOTING_RGB_ROWS][WOOTING_RGB_COLS] = {
+      {0,  NOLED, 11, 12, 23, 24, 36,  47,  85,  84, 49,
+       48, 59,    61, 73, 81, 80, 113, 114, 115, 116},
+      {2,  1,  14, 13, 26, 25, 35, 38, 37, 87, 86,
+       95, 51, 63, 75, 72, 74, 96, 97, 98, 99},
+      {3,  4,  15, 16, 27, 28, 39,  42,  40,  88, 89,
+       52, 53, 71, 76, 83, 77, 102, 103, 104, 100},
+      {5,  6,  17, 18,    29,    30,    41,  46,  44,  90,   93,
+       54, 57, 65, NOLED, NOLED, NOLED, 105, 106, 107, NOLED},
+      {9,  8,     19, 20,    31, 34,    32,  45,  43,  91, 92,
+       55, NOLED, 66, NOLED, 78, NOLED, 108, 109, 110, 101},
+      {10, 22, 21, NOLED, NOLED, NOLED, 33,    NOLED, NOLED, NOLED, 94,
+       58, 67, 68, 70,    79,    82,    NOLED, 111,   112,   NOLED}};
 
-	WOOTING_USB_META* meta = wooting_usb_get_meta();
-	if (row < meta->max_rows && column < meta->max_columns) {
-		return rgb_led_index[row][column];
-	} else {
-		return NOLED;
-	}
+  WOOTING_USB_META *meta = wooting_usb_get_meta();
+  if (row < meta->max_rows && column < meta->max_columns) {
+    return rgb_led_index[row][column];
+  } else {
+    return NOLED;
+  }
 }
 
-static inline uint16_t encodeColor(uint8_t red, uint8_t green, uint8_t blue) 
-{
-	uint16_t encode = 0;
+static inline uint16_t encodeColor(uint8_t red, uint8_t green, uint8_t blue) {
+  uint16_t encode = 0;
 
-	encode |= (red & 0xf8) << 8;
-	encode |= (green & 0xfc) << 3;
-	encode |= (blue  & 0xf8) >> 3;
+  encode |= (red & 0xf8) << 8;
+  encode |= (green & 0xfc) << 3;
+  encode |= (blue & 0xf8) >> 3;
 
-	return encode;
+  return encode;
 }
 
-bool wooting_rgb_kbd_connected() {
-	return wooting_usb_find_keyboard();
-}
+bool wooting_rgb_kbd_connected() { return wooting_usb_find_keyboard(); }
 
 void wooting_rgb_set_disconnected_cb(void_cb cb) {
-	wooting_usb_set_disconnected_cb(cb);
+  wooting_usb_set_disconnected_cb(cb);
 }
 
 bool wooting_rgb_reset_rgb() {
-	return wooting_usb_send_feature(WOOTING_RESET_ALL_COMMAND, 0, 0, 0, 0);
+  return wooting_usb_send_feature(WOOTING_RESET_ALL_COMMAND, 0, 0, 0, 0);
 }
-
 
 bool wooting_rgb_close() {
-	if (wooting_rgb_reset_rgb()) {
-		wooting_usb_disconnect(false);
-		return true;
-	}
-	else {
-		return false;
-	}
+  if (wooting_rgb_reset_rgb()) {
+    wooting_usb_disconnect(false);
+    return true;
+  } else {
+    return false;
+  }
 }
 
-bool wooting_rgb_reset() {
-	return wooting_rgb_close();
-}
+bool wooting_rgb_reset() { return wooting_rgb_close(); }
 
-bool wooting_rgb_direct_set_key(uint8_t row, uint8_t column, uint8_t red, uint8_t green, uint8_t blue) {
-	// We don't need to call this here as the wooting_usb_send_feature calls will perform the check again and there's no need to
-	// run this multiple times, especially when each call will attempt to ensure connection is still available
-	// if (!wooting_rgb_kbd_connected()) {
-	// 	return false;
-	// }
-	if (wooting_usb_use_v2_interface()){
-		KeyboardMatrixID id = {.row = row, .column = column};
-		return wooting_usb_send_feature(WOOTING_SINGLE_COLOR_COMMAND, *(uint8_t*)&id, red, green, blue);
-	} else {
-		uint8_t keyCode = get_safe_led_idex(row, column);
+bool wooting_rgb_direct_set_key(uint8_t row, uint8_t column, uint8_t red,
+                                uint8_t green, uint8_t blue) {
+  // We don't need to call this here as the wooting_usb_send_feature calls will
+  // perform the check again and there's no need to run this multiple times,
+  // especially when each call will attempt to ensure connection is still
+  // available if (!wooting_rgb_kbd_connected()) { 	return false;
+  // }
+  if (wooting_usb_use_v2_interface()) {
+    KeyboardMatrixID id = {.row = row, .column = column};
+    return wooting_usb_send_feature(WOOTING_SINGLE_COLOR_COMMAND,
+                                    *(uint8_t *)&id, red, green, blue);
+  } else {
+    uint8_t keyCode = get_safe_led_idex(row, column);
 
-		if (keyCode == NOLED || keyCode > wooting_usb_get_meta()->led_index_max) {
-			return false;
-		}
-		else if (keyCode == LED_LEFT_SHIFT_ANSI) {
-			bool update_ansi = wooting_usb_send_feature(WOOTING_SINGLE_COLOR_COMMAND, LED_LEFT_SHIFT_ANSI, red, green, blue);
-			bool update_iso = wooting_usb_send_feature(WOOTING_SINGLE_COLOR_COMMAND, LED_LEFT_SHIFT_ISO, red, green, blue);
+    if (keyCode == NOLED || keyCode > wooting_usb_get_meta()->led_index_max) {
+      return false;
+    } else if (keyCode == LED_LEFT_SHIFT_ANSI) {
+      bool update_ansi = wooting_usb_send_feature(
+          WOOTING_SINGLE_COLOR_COMMAND, LED_LEFT_SHIFT_ANSI, red, green, blue);
+      bool update_iso = wooting_usb_send_feature(
+          WOOTING_SINGLE_COLOR_COMMAND, LED_LEFT_SHIFT_ISO, red, green, blue);
 
-			return update_ansi && update_iso;
-		}
-		else if (keyCode == LED_ENTER_ANSI) {
-			bool update_ansi = wooting_usb_send_feature(WOOTING_SINGLE_COLOR_COMMAND, LED_ENTER_ANSI, red, green, blue);
-			bool update_iso = wooting_usb_send_feature(WOOTING_SINGLE_COLOR_COMMAND, LED_ENTER_ISO, red, green, blue);
+      return update_ansi && update_iso;
+    } else if (keyCode == LED_ENTER_ANSI) {
+      bool update_ansi = wooting_usb_send_feature(
+          WOOTING_SINGLE_COLOR_COMMAND, LED_ENTER_ANSI, red, green, blue);
+      bool update_iso = wooting_usb_send_feature(
+          WOOTING_SINGLE_COLOR_COMMAND, LED_ENTER_ISO, red, green, blue);
 
-			return update_ansi && update_iso;
-		}
-		else {
-			return wooting_usb_send_feature(WOOTING_SINGLE_COLOR_COMMAND, keyCode, red, green, blue);
-		}
-	}
+      return update_ansi && update_iso;
+    } else {
+      return wooting_usb_send_feature(WOOTING_SINGLE_COLOR_COMMAND, keyCode,
+                                      red, green, blue);
+    }
+  }
 }
 
 bool wooting_rgb_direct_reset_key(uint8_t row, uint8_t column) {
-	if (!wooting_rgb_kbd_connected()) {
-		return false;
-	}
+  if (!wooting_rgb_kbd_connected()) {
+    return false;
+  }
 
-	if (wooting_usb_use_v2_interface()){
-		KeyboardMatrixID id = {.row = row, .column = column};
-		return wooting_usb_send_feature(WOOTING_SINGLE_RESET_COMMAND, 0, 0, 0, *(uint8_t*)&id);
-	} else {
-		uint8_t keyCode = get_safe_led_idex(row, column);
+  if (wooting_usb_use_v2_interface()) {
+    KeyboardMatrixID id = {.row = row, .column = column};
+    return wooting_usb_send_feature(WOOTING_SINGLE_RESET_COMMAND, 0, 0, 0,
+                                    *(uint8_t *)&id);
+  } else {
+    uint8_t keyCode = get_safe_led_idex(row, column);
 
-		if (keyCode == NOLED || keyCode > wooting_usb_get_meta()->led_index_max) {
-			return false;
-		}
-		else if (keyCode == LED_LEFT_SHIFT_ANSI) {
-			bool update_ansi = wooting_usb_send_feature(WOOTING_SINGLE_RESET_COMMAND, 0, 0, 0, LED_LEFT_SHIFT_ANSI);
-			bool update_iso = wooting_usb_send_feature(WOOTING_SINGLE_RESET_COMMAND, 0, 0, 0, LED_LEFT_SHIFT_ISO);
+    if (keyCode == NOLED || keyCode > wooting_usb_get_meta()->led_index_max) {
+      return false;
+    } else if (keyCode == LED_LEFT_SHIFT_ANSI) {
+      bool update_ansi = wooting_usb_send_feature(WOOTING_SINGLE_RESET_COMMAND,
+                                                  0, 0, 0, LED_LEFT_SHIFT_ANSI);
+      bool update_iso = wooting_usb_send_feature(WOOTING_SINGLE_RESET_COMMAND,
+                                                 0, 0, 0, LED_LEFT_SHIFT_ISO);
 
-			return update_ansi && update_iso;
-		}
-		else if (keyCode == LED_ENTER_ANSI) {
-			bool update_ansi = wooting_usb_send_feature(WOOTING_SINGLE_RESET_COMMAND, 0, 0, 0, LED_ENTER_ANSI);
-			bool update_iso = wooting_usb_send_feature(WOOTING_SINGLE_RESET_COMMAND, 0, 0, 0, LED_ENTER_ISO);
+      return update_ansi && update_iso;
+    } else if (keyCode == LED_ENTER_ANSI) {
+      bool update_ansi = wooting_usb_send_feature(WOOTING_SINGLE_RESET_COMMAND,
+                                                  0, 0, 0, LED_ENTER_ANSI);
+      bool update_iso = wooting_usb_send_feature(WOOTING_SINGLE_RESET_COMMAND,
+                                                 0, 0, 0, LED_ENTER_ISO);
 
-			return update_ansi && update_iso;
-		}
-		else {
-			return wooting_usb_send_feature(WOOTING_SINGLE_RESET_COMMAND, 0, 0, 0, keyCode);
-		}
-	}
+      return update_ansi && update_iso;
+    } else {
+      return wooting_usb_send_feature(WOOTING_SINGLE_RESET_COMMAND, 0, 0, 0,
+                                      keyCode);
+    }
+  }
 }
 
 void wooting_rgb_array_auto_update(bool auto_update) {
-	wooting_rgb_auto_update = auto_update;
+  wooting_rgb_auto_update = auto_update;
 }
 
 bool wooting_rgb_array_update_keyboard() {
-	if (!wooting_rgb_kbd_connected()) {
-		return false;
-	}
- 
-	if (wooting_usb_use_v2_interface()) {
-		if (rgb_buffer_matrix_changed) {
-			if (!wooting_usb_send_buffer_v2(rgb_buffer_matrix)) {
-				return false;
-			}	
-			rgb_buffer_matrix_changed = false;
-		}
-	} else {
+  if (!wooting_rgb_kbd_connected()) {
+    return false;
+  }
 
-		if (rgb_buffer0_changed) {
-			if (!wooting_usb_send_buffer_v1(PART0, rgb_buffer0)) {
-				return false;
-			}
-			rgb_buffer0_changed = false;
-		}
-		
-		if (rgb_buffer1_changed) {
-			if (!wooting_usb_send_buffer_v1(PART1, rgb_buffer1)) {
-				return false;
-			}
-			rgb_buffer1_changed = false;
-		}
+  if (wooting_usb_use_v2_interface()) {
+    if (rgb_buffer_matrix_changed) {
+      if (!wooting_usb_send_buffer_v2(rgb_buffer_matrix)) {
+        return false;
+      }
+      rgb_buffer_matrix_changed = false;
+    }
+  } else {
 
-		if (rgb_buffer2_changed) {
-			if (!wooting_usb_send_buffer_v1(PART2, rgb_buffer2)) {
-				return false;
-			}
-			rgb_buffer2_changed = false;
-		}
+    if (rgb_buffer0_changed) {
+      if (!wooting_usb_send_buffer_v1(PART0, rgb_buffer0)) {
+        return false;
+      }
+      rgb_buffer0_changed = false;
+    }
 
-		if (rgb_buffer3_changed) {
-			if (!wooting_usb_send_buffer_v1(PART3, rgb_buffer3)) {
-				return false;
-			}
-			rgb_buffer3_changed = false;
-		}
+    if (rgb_buffer1_changed) {
+      if (!wooting_usb_send_buffer_v1(PART1, rgb_buffer1)) {
+        return false;
+      }
+      rgb_buffer1_changed = false;
+    }
 
-		if (rgb_buffer4_changed && wooting_usb_get_meta()->device_type == DEVICE_KEYBOARD) {
-			if (!wooting_usb_send_buffer_v1(PART4, rgb_buffer4)) {
-				return false;
-			}
-			rgb_buffer4_changed = false;
-		}
-	}
-	return true;
+    if (rgb_buffer2_changed) {
+      if (!wooting_usb_send_buffer_v1(PART2, rgb_buffer2)) {
+        return false;
+      }
+      rgb_buffer2_changed = false;
+    }
+
+    if (rgb_buffer3_changed) {
+      if (!wooting_usb_send_buffer_v1(PART3, rgb_buffer3)) {
+        return false;
+      }
+      rgb_buffer3_changed = false;
+    }
+
+    if (rgb_buffer4_changed &&
+        wooting_usb_get_meta()->device_type == DEVICE_KEYBOARD) {
+      if (!wooting_usb_send_buffer_v1(PART4, rgb_buffer4)) {
+        return false;
+      }
+      rgb_buffer4_changed = false;
+    }
+  }
+  return true;
 }
 
-static bool wooting_rgb_array_change_single(uint8_t row, uint8_t column, uint8_t red, uint8_t green, uint8_t blue) {
-	if (wooting_usb_use_v2_interface()){
-		uint16_t prevValue = rgb_buffer_matrix[row][column];
-		uint16_t newValue = encodeColor(red, green, blue);
-		if (newValue != prevValue) {
-			rgb_buffer_matrix[row][column] =newValue;
-			rgb_buffer_matrix_changed = true;
-		}
+static bool wooting_rgb_array_change_single(uint8_t row, uint8_t column,
+                                            uint8_t red, uint8_t green,
+                                            uint8_t blue) {
+  if (wooting_usb_use_v2_interface()) {
+    uint16_t prevValue = rgb_buffer_matrix[row][column];
+    uint16_t newValue = encodeColor(red, green, blue);
+    if (newValue != prevValue) {
+      rgb_buffer_matrix[row][column] = newValue;
+      rgb_buffer_matrix_changed = true;
+    }
 
-		return true;
-	} else {
+    return true;
+  } else {
 
-		const uint8_t pwm_mem_map[48] =
-		{
-			0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd,
-			0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d,
-			0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d,
-			0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d
-		};
+    const uint8_t pwm_mem_map[48] = {
+        0x0,  0x1,  0x2,  0x3,  0x4,  0x5,  0x8,  0x9,  0xa,  0xb,  0xc,  0xd,
+        0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d,
+        0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d,
+        0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d};
 
-		uint8_t led_index = get_safe_led_idex(row, column);
-		uint8_t *buffer_pointer;
+    uint8_t led_index = get_safe_led_idex(row, column);
+    uint8_t *buffer_pointer;
 
-		// prevent assigning led's that don't exist
-		if (led_index > wooting_usb_get_meta()->led_index_max) {
-			return false;
-		}
-		if (led_index >= 96) {
-			buffer_pointer = rgb_buffer4;
-			rgb_buffer4_changed = true;
-		}
-		else if (led_index >= 72) {
-			buffer_pointer = rgb_buffer3;
-			rgb_buffer3_changed = true;
-		}
-		else if (led_index >= 48) {
-			buffer_pointer = rgb_buffer2;
-			rgb_buffer2_changed = true;
-		}
-		else if (led_index >= 24) {
-			buffer_pointer = rgb_buffer1;
-			rgb_buffer1_changed = true;
-		}
-		else {
-			buffer_pointer = rgb_buffer0;
-			rgb_buffer0_changed = true;
-		}
-		
-		uint8_t buffer_index = pwm_mem_map[led_index % 24];
-		buffer_pointer[buffer_index] = gammaFilter[red];
-		buffer_pointer[buffer_index + 0x10] = gammaFilter[green];
-		buffer_pointer[buffer_index + 0x20] = gammaFilter[blue];
+    // prevent assigning led's that don't exist
+    if (led_index > wooting_usb_get_meta()->led_index_max) {
+      return false;
+    }
+    if (led_index >= 96) {
+      buffer_pointer = rgb_buffer4;
+      rgb_buffer4_changed = true;
+    } else if (led_index >= 72) {
+      buffer_pointer = rgb_buffer3;
+      rgb_buffer3_changed = true;
+    } else if (led_index >= 48) {
+      buffer_pointer = rgb_buffer2;
+      rgb_buffer2_changed = true;
+    } else if (led_index >= 24) {
+      buffer_pointer = rgb_buffer1;
+      rgb_buffer1_changed = true;
+    } else {
+      buffer_pointer = rgb_buffer0;
+      rgb_buffer0_changed = true;
+    }
 
-		if (led_index == LED_ENTER_ANSI) {
-			uint8_t iso_enter_index = pwm_mem_map[LED_ENTER_ISO - 48];
-			rgb_buffer2[iso_enter_index] = rgb_buffer2[buffer_index];
-			rgb_buffer2[iso_enter_index + 0x10] = rgb_buffer2[buffer_index + 0x10];
-			rgb_buffer2[iso_enter_index + 0x20] = rgb_buffer2[buffer_index + 0x20];
-		}
-		else if (led_index == LED_LEFT_SHIFT_ANSI) {
-			uint8_t iso_shift_index = pwm_mem_map[LED_LEFT_SHIFT_ISO];
-			rgb_buffer0[iso_shift_index] = rgb_buffer0[buffer_index];
-			rgb_buffer0[iso_shift_index + 0x10] = rgb_buffer0[buffer_index + 0x10];
-			rgb_buffer0[iso_shift_index + 0x20] = rgb_buffer0[buffer_index + 0x20];
-		}
+    uint8_t buffer_index = pwm_mem_map[led_index % 24];
+    buffer_pointer[buffer_index] = gammaFilter[red];
+    buffer_pointer[buffer_index + 0x10] = gammaFilter[green];
+    buffer_pointer[buffer_index + 0x20] = gammaFilter[blue];
 
-		return true;
-	}
+    if (led_index == LED_ENTER_ANSI) {
+      uint8_t iso_enter_index = pwm_mem_map[LED_ENTER_ISO - 48];
+      rgb_buffer2[iso_enter_index] = rgb_buffer2[buffer_index];
+      rgb_buffer2[iso_enter_index + 0x10] = rgb_buffer2[buffer_index + 0x10];
+      rgb_buffer2[iso_enter_index + 0x20] = rgb_buffer2[buffer_index + 0x20];
+    } else if (led_index == LED_LEFT_SHIFT_ANSI) {
+      uint8_t iso_shift_index = pwm_mem_map[LED_LEFT_SHIFT_ISO];
+      rgb_buffer0[iso_shift_index] = rgb_buffer0[buffer_index];
+      rgb_buffer0[iso_shift_index + 0x10] = rgb_buffer0[buffer_index + 0x10];
+      rgb_buffer0[iso_shift_index + 0x20] = rgb_buffer0[buffer_index + 0x20];
+    }
+
+    return true;
+  }
 }
 
-bool wooting_rgb_array_set_single(uint8_t row, uint8_t column, uint8_t red, uint8_t green, uint8_t blue) {
-	//We just check to see if we believe the keyboard to be connected here as this call may just be updating the array and not actually communicating with the keyboard
-	//If auto update is on then the update_keyboard method will ping the keyboard before communicating with the keyboard
-	if (!wooting_usb_get_meta()->connected) {
-		return false;
-	}
+bool wooting_rgb_array_set_single(uint8_t row, uint8_t column, uint8_t red,
+                                  uint8_t green, uint8_t blue) {
+  // We just check to see if we believe the keyboard to be connected here as
+  // this call may just be updating the array and not actually communicating
+  // with the keyboard If auto update is on then the update_keyboard method will
+  // ping the keyboard before communicating with the keyboard
+  if (!wooting_usb_get_meta()->connected) {
+    return false;
+  }
 
-	if (!wooting_rgb_array_change_single(row, column, red, green, blue)) {
-		return false;
-	}
+  if (!wooting_rgb_array_change_single(row, column, red, green, blue)) {
+    return false;
+  }
 
-	if (wooting_rgb_auto_update) {
-		return wooting_rgb_array_update_keyboard();
-	}
-	else {
-		return true;
-	}
+  if (wooting_rgb_auto_update) {
+    return wooting_rgb_array_update_keyboard();
+  } else {
+    return true;
+  }
 }
 
-bool wooting_rgb_array_set_full(const uint8_t* colors_buffer) {
-	//Just need to check if we believe it is connected, the update_keyboard call will ping the keyboard if it is necessary
-	if (!wooting_usb_get_meta()->connected) {
-		return false;
-	}
+bool wooting_rgb_array_set_full(const uint8_t *colors_buffer) {
+  // Just need to check if we believe it is connected, the update_keyboard call
+  // will ping the keyboard if it is necessary
+  if (!wooting_usb_get_meta()->connected) {
+    return false;
+  }
 
-	const uint8_t columns = wooting_usb_get_meta()->max_columns;
+  const uint8_t columns = wooting_usb_get_meta()->max_columns;
 
-	for (uint8_t row = 0; row < WOOTING_RGB_ROWS; row++) {
-		const uint8_t* color = colors_buffer + row * WOOTING_RGB_COLS * 3;
-		for (uint8_t col = 0; col < columns; col++) {
-			uint8_t red = color[0];
-			uint8_t green = color[1];
-			uint8_t blue = color[2];
+  for (uint8_t row = 0; row < WOOTING_RGB_ROWS; row++) {
+    const uint8_t *color = colors_buffer + row * WOOTING_RGB_COLS * 3;
+    for (uint8_t col = 0; col < columns; col++) {
+      uint8_t red = color[0];
+      uint8_t green = color[1];
+      uint8_t blue = color[2];
 
-			wooting_rgb_array_change_single(row, col, red, green, blue);
+      wooting_rgb_array_change_single(row, col, red, green, blue);
 
-			color += 3;
-		}
-	}
+      color += 3;
+    }
+  }
 
-	if (wooting_rgb_auto_update) {
-		return wooting_rgb_array_update_keyboard();
-	}
-	else {
-		return true;
-	}
+  if (wooting_rgb_auto_update) {
+    return wooting_rgb_array_update_keyboard();
+  } else {
+    return true;
+  }
 }
 
-const WOOTING_USB_META* wooting_rgb_device_info() {
-	if (!wooting_usb_get_meta()->connected) wooting_usb_find_keyboard();
-	return wooting_usb_get_meta();
+const WOOTING_USB_META *wooting_rgb_device_info() {
+  if (!wooting_usb_get_meta()->connected)
+    wooting_usb_find_keyboard();
+  return wooting_usb_get_meta();
 }
 
 WOOTING_DEVICE_LAYOUT wooting_rgb_device_layout(void) {
-	return wooting_usb_get_meta()->layout;
+  return wooting_usb_get_meta()->layout;
 }
