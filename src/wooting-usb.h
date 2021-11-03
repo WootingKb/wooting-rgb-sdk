@@ -22,8 +22,10 @@ extern "C" {
 #define WOOTINGRGBSDK_API
 #endif
 
-#include <stdio.h>
+#include "stdbool.h"
+#include "stdint.h"
 #include <stddef.h>
+#include <stdio.h>
 
 typedef void (*void_cb)(void);
 
