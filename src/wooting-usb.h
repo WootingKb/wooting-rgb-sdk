@@ -36,7 +36,10 @@ typedef enum WOOTING_DEVICE_TYPE {
   DEVICE_KEYBOARD_TKL = 1,
 
   // Full Size keyboard. E.g. Wooting Two
-  DEVICE_KEYBOARD = 2
+  DEVICE_KEYBOARD = 2,
+
+  // 60 percent keyboard, E.g. Wooting 60HE
+  DEVICE_KEYBOARD_60 = 3
 } WOOTING_DEVICE_TYPE;
 
 typedef enum WOOTING_DEVICE_LAYOUT {

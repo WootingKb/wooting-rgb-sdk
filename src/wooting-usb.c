@@ -123,7 +123,7 @@ static void set_meta_wooting_two_he(void) {
 
 static void set_meta_wooting_60he(void) {
   wooting_usb_meta.model = "Wooting 60HE";
-  wooting_usb_meta.device_type = DEVICE_KEYBOARD;
+  wooting_usb_meta.device_type = DEVICE_KEYBOARD_60;
   wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
   wooting_usb_meta.max_columns = 14;
   wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
