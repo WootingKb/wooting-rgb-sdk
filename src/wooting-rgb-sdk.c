@@ -226,8 +226,7 @@ bool wooting_rgb_array_update_keyboard() {
     }
 
     if (rgb_buffer4_changed &&
-        (wooting_usb_get_meta()->device_type == DEVICE_KEYBOARD ||
-         wooting_usb_get_meta()->device_type == DEVICE_KEYBOARD_60)) {
+        wooting_usb_get_meta()->device_type == DEVICE_KEYBOARD) {
       if (!wooting_usb_send_buffer_v1(PART4, rgb_buffer4)) {
         return false;
       }
