@@ -33,6 +33,7 @@
 #define WOOTING_TWO_LE_PID 0x1210
 
 #define WOOTING_TWO_HE_PID 0x1220
+#define WOOTING_60HE_PID 0x1300
 
 #define CFG_USAGE_PAGE 0x1337
 
@@ -62,7 +63,7 @@ static uint16_t getCrc16ccitt(const uint8_t *buffer, uint16_t size) {
 
 typedef void (*set_meta_func)();
 
-static void reset_meta() {
+static void reset_meta(void) {
   wooting_usb_meta.connected = false;
 
   wooting_usb_meta.model = "N/A";
@@ -74,7 +75,7 @@ static void reset_meta() {
   wooting_usb_meta.layout = LAYOUT_UNKNOWN;
 }
 
-static void set_meta_wooting_one() {
+static void set_meta_wooting_one(void) {
   wooting_usb_meta.model = "Wooting One";
   wooting_usb_meta.device_type = DEVICE_KEYBOARD_TKL;
   wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
@@ -83,12 +84,12 @@ static void set_meta_wooting_one() {
   wooting_usb_meta.v2_interface = false;
 }
 
-static void set_meta_wooting_one_v2() {
+static void set_meta_wooting_one_v2(void) {
   set_meta_wooting_one();
   wooting_usb_meta.v2_interface = true;
 }
 
-static void set_meta_wooting_two() {
+static void set_meta_wooting_two(void) {
   wooting_usb_meta.model = "Wooting Two";
   wooting_usb_meta.device_type = DEVICE_KEYBOARD;
   wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
@@ -97,27 +98,34 @@ static void set_meta_wooting_two() {
   wooting_usb_meta.v2_interface = false;
 }
 
-static void set_meta_wooting_two_v2() {
+static void set_meta_wooting_two_v2(void) {
   set_meta_wooting_two();
   wooting_usb_meta.v2_interface = true;
 }
 
-static void set_meta_wooting_two_le() {
+static void set_meta_wooting_two_le(void) {
   wooting_usb_meta.model = "Wooting Two Lekker Edition";
   wooting_usb_meta.device_type = DEVICE_KEYBOARD;
-  wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
   wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
   wooting_usb_meta.max_columns = WOOTING_TWO_RGB_COLS;
   wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
   wooting_usb_meta.v2_interface = true;
 }
 
-static void set_meta_wooting_two_he() {
+static void set_meta_wooting_two_he(void) {
   wooting_usb_meta.model = "Wooting Two HE";
   wooting_usb_meta.device_type = DEVICE_KEYBOARD;
-  wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
   wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
   wooting_usb_meta.max_columns = WOOTING_TWO_RGB_COLS;
+  wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
+  wooting_usb_meta.v2_interface = true;
+}
+
+static void set_meta_wooting_60he(void) {
+  wooting_usb_meta.model = "Wooting 60HE";
+  wooting_usb_meta.device_type = DEVICE_KEYBOARD_60;
+  wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
+  wooting_usb_meta.max_columns = 14;
   wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
   wooting_usb_meta.v2_interface = true;
 }
@@ -204,6 +212,13 @@ bool wooting_usb_find_keyboard() {
 
   struct hid_device_info *hid_info;
 
+#define PID_ALT_CHECK(base_pid)                                                \
+  (hid_info = hid_enumerate(WOOTING_VID2, base_pid | V2_ALT_PID_0)) != NULL || \
+      (hid_info = hid_enumerate(WOOTING_VID2, base_pid | V2_ALT_PID_1)) !=     \
+          NULL ||                                                              \
+      (hid_info = hid_enumerate(WOOTING_VID2, base_pid | V2_ALT_PID_2)) !=     \
+          NULL
+
   reset_meta();
   set_meta_func meta_func;
   if ((hid_info = hid_enumerate(WOOTING_VID, WOOTING_ONE_PID)) != NULL) {
@@ -211,12 +226,7 @@ bool wooting_usb_find_keyboard() {
     printf("Enumerate on Wooting One Successful\n");
 #endif
     meta_func = set_meta_wooting_one;
-  } else if ((hid_info = hid_enumerate(
-                  WOOTING_VID2, WOOTING_ONE_V2_PID | V2_ALT_PID_0)) != NULL ||
-             (hid_info = hid_enumerate(
-                  WOOTING_VID2, WOOTING_ONE_V2_PID | V2_ALT_PID_1)) != NULL ||
-             (hid_info = hid_enumerate(
-                  WOOTING_VID2, WOOTING_ONE_V2_PID | V2_ALT_PID_2)) != NULL) {
+  } else if (PID_ALT_CHECK(WOOTING_ONE_V2_PID)) {
 #ifdef DEBUG_LOG
     printf("Enumerate on Wooting One (V2) Successful\n");
 #endif
@@ -226,36 +236,26 @@ bool wooting_usb_find_keyboard() {
     printf("Enumerate on Wooting Two Successful\n");
 #endif
     meta_func = set_meta_wooting_two;
-  } else if ((hid_info = hid_enumerate(
-                  WOOTING_VID2, WOOTING_TWO_V2_PID | V2_ALT_PID_0)) != NULL ||
-             (hid_info = hid_enumerate(
-                  WOOTING_VID2, WOOTING_TWO_V2_PID | V2_ALT_PID_1)) != NULL ||
-             (hid_info = hid_enumerate(
-                  WOOTING_VID2, WOOTING_TWO_V2_PID | V2_ALT_PID_2)) != NULL) {
+  } else if (PID_ALT_CHECK(WOOTING_TWO_V2_PID)) {
 #ifdef DEBUG_LOG
     printf("Enumerate on Wooting Two (V2) Successful\n");
 #endif
     meta_func = set_meta_wooting_two_v2;
-  } else if ((hid_info = hid_enumerate(
-                  WOOTING_VID2, WOOTING_TWO_LE_PID | V2_ALT_PID_0)) != NULL ||
-             (hid_info = hid_enumerate(
-                  WOOTING_VID2, WOOTING_TWO_LE_PID | V2_ALT_PID_1)) != NULL ||
-             (hid_info = hid_enumerate(
-                  WOOTING_VID2, WOOTING_TWO_LE_PID | V2_ALT_PID_2)) != NULL) {
+  } else if (PID_ALT_CHECK(WOOTING_TWO_LE_PID)) {
 #ifdef DEBUG_LOG
     printf("Enumerate on Wooting Two Lekker Edition Successful\n");
 #endif
     meta_func = set_meta_wooting_two_le;
-  } else if ((hid_info = hid_enumerate(
-                  WOOTING_VID2, WOOTING_TWO_HE_PID | V2_ALT_PID_0)) != NULL ||
-             (hid_info = hid_enumerate(
-                  WOOTING_VID2, WOOTING_TWO_HE_PID | V2_ALT_PID_1)) != NULL ||
-             (hid_info = hid_enumerate(
-                  WOOTING_VID2, WOOTING_TWO_HE_PID | V2_ALT_PID_2)) != NULL) {
+  } else if (PID_ALT_CHECK(WOOTING_TWO_HE_PID)) {
 #ifdef DEBUG_LOG
     printf("Enumerate on Wooting Two HE Successful\n");
 #endif
     meta_func = set_meta_wooting_two_he;
+  } else if (PID_ALT_CHECK(WOOTING_60HE_PID)) {
+#ifdef DEBUG_LOG
+    printf("Enumerate on Wooting 60HE Successful\n");
+#endif
+    meta_func = set_meta_wooting_60he;
   } else {
 #ifdef DEBUG_LOG
     printf("Enumerate failed\n");
