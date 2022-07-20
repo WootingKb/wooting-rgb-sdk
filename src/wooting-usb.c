@@ -106,7 +106,6 @@ static void set_meta_wooting_two_v2(void) {
 static void set_meta_wooting_two_le(void) {
   wooting_usb_meta.model = "Wooting Two Lekker Edition";
   wooting_usb_meta.device_type = DEVICE_KEYBOARD;
-  wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
   wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
   wooting_usb_meta.max_columns = WOOTING_TWO_RGB_COLS;
   wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
@@ -116,7 +115,6 @@ static void set_meta_wooting_two_le(void) {
 static void set_meta_wooting_two_he(void) {
   wooting_usb_meta.model = "Wooting Two HE";
   wooting_usb_meta.device_type = DEVICE_KEYBOARD;
-  wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
   wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
   wooting_usb_meta.max_columns = WOOTING_TWO_RGB_COLS;
   wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
@@ -125,8 +123,7 @@ static void set_meta_wooting_two_he(void) {
 
 static void set_meta_wooting_60he(void) {
   wooting_usb_meta.model = "Wooting 60HE";
-  wooting_usb_meta.device_type = DEVICE_KEYBOARD;
-  wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
+  wooting_usb_meta.device_type = DEVICE_KEYBOARD_60;
   wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
   wooting_usb_meta.max_columns = 14;
   wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
