@@ -64,6 +64,8 @@ typedef struct _KeyboardMatrixID {
   uint8_t row : 3;
 } KeyboardMatrixID;
 
+#define WOOTING_MAX_RGB_DEVICES 10
+
 #define RGB_RAW_BUFFER_SIZE 96
 
 #define WOOTING_RGB_ROWS 6
@@ -88,6 +90,8 @@ void wooting_usb_disconnect(bool trigger_cb);
 bool wooting_usb_find_keyboard(void);
 
 WOOTING_USB_META *wooting_usb_get_meta(void);
+WOOTINGRGBSDK_API uint8_t wooting_usb_keyboard_count(void);
+WOOTINGRGBSDK_API bool wooting_usb_select_device(uint8_t);
 WOOTINGRGBSDK_API bool wooting_usb_use_v2_interface(void);
 WOOTINGRGBSDK_API size_t wooting_usb_get_response_size(void);
 
