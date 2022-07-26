@@ -331,10 +331,7 @@ void walk_hid_devices(hid_device *hid_info, set_meta_func meta_func) {
   // page
   struct hid_device_info* hid_info_walker = hid_info;
   while (hid_info_walker) {
-    if (connected_keyboards == WOOTING_MAX_RGB_DEVICES) {
-        connected_keyboards--;
-        break;
-    }
+    if (connected_keyboards == WOOTING_MAX_RGB_DEVICES) break;
 #ifdef DEBUG_LOG
     printf("Found interface No: %d\n", hid_info_walker->interface_number);
     printf("Found usage page: %d\n", hid_info_walker->usage_page);
@@ -387,7 +384,7 @@ void walk_hid_devices(hid_device *hid_info, set_meta_func meta_func) {
 
 bool wooting_usb_select_device(uint8_t device_index) {
   // Only change device if the given index is valid
-  if (device_index < 0 || (device_index >= connected_keyboards && !enumerating)) return false;
+  if (device_index < 0 || device_index >= WOOTING_MAX_RGB_DEVICES || (device_index >= connected_keyboards && !enumerating)) return false;
 
   // Fetch pointer and meta data from arrays
   keyboard_handle = keyboard_handle_array[device_index];
