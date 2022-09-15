@@ -34,6 +34,7 @@
 
 #define WOOTING_TWO_HE_PID 0x1220
 #define WOOTING_60HE_PID 0x1300
+#define WOOTING_60HE_ARM_PID 0x1310
 
 #define CFG_USAGE_PAGE 0x1337
 
@@ -123,6 +124,15 @@ static void set_meta_wooting_two_he(void) {
 
 static void set_meta_wooting_60he(void) {
   wooting_usb_meta.model = "Wooting 60HE";
+  wooting_usb_meta.device_type = DEVICE_KEYBOARD_60;
+  wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
+  wooting_usb_meta.max_columns = 14;
+  wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
+  wooting_usb_meta.v2_interface = true;
+}
+
+static void set_meta_wooting_60he_arm(void) {
+  wooting_usb_meta.model = "Wooting 60HE (ARM)";
   wooting_usb_meta.device_type = DEVICE_KEYBOARD_60;
   wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
   wooting_usb_meta.max_columns = 14;
@@ -256,6 +266,11 @@ bool wooting_usb_find_keyboard() {
     printf("Enumerate on Wooting 60HE Successful\n");
 #endif
     meta_func = set_meta_wooting_60he;
+  } else if (PID_ALT_CHECK(WOOTING_60HE_ARM_PID)) {
+#ifdef DEBUG_LOG
+    printf("Enumerate on Wooting 60HE (ARM) Successful\n");
+#endif
+    meta_func = set_meta_wooting_60he_arm;
   } else {
 #ifdef DEBUG_LOG
     printf("Enumerate failed\n");
@@ -601,6 +616,10 @@ static void debug_print_buffer(uint8_t *buff, size_t len) {
 int wooting_usb_read_response_timeout(uint8_t *buff, size_t len,
                                       int milliseconds) {
   int result = hid_read_timeout(keyboard_handle, buff, len, milliseconds);
+  while (result < len) {
+    result += hid_read_timeout(keyboard_handle, buff + result, len - result,
+                               milliseconds);
+  }
 #ifdef DEBUG_LOG
   printf("hid_read_timeout result code: %d\n", result);
 #endif
@@ -610,6 +629,9 @@ int wooting_usb_read_response_timeout(uint8_t *buff, size_t len,
 
 int wooting_usb_read_response(uint8_t *buff, size_t len) {
   int result = hid_read(keyboard_handle, buff, len);
+  while (result < len) {
+    result += hid_read(keyboard_handle, buff + result, len - result);
+  }
 #ifdef DEBUG_LOG
   printf("hid_read result code: %d\n", result);
 #endif
