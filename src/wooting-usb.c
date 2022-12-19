@@ -140,12 +140,12 @@ static void set_meta_wooting_60he(void) {
 }
 
 static void set_meta_wooting_60he_arm(void) {
-  wooting_usb_meta.model = "Wooting 60HE (ARM)";
-  wooting_usb_meta.device_type = DEVICE_KEYBOARD_60;
-  wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
-  wooting_usb_meta.max_columns = 14;
-  wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
-  wooting_usb_meta.v2_interface = true;
+  wooting_usb_meta->model = "Wooting 60HE (ARM)";
+  wooting_usb_meta->device_type = DEVICE_KEYBOARD_60;
+  wooting_usb_meta->max_rows = WOOTING_RGB_ROWS;
+  wooting_usb_meta->max_columns = 14;
+  wooting_usb_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
+  wooting_usb_meta->v2_interface = true;
 }
 
 WOOTING_USB_META *wooting_usb_get_meta() {
