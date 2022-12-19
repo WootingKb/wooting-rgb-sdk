@@ -305,7 +305,7 @@ bool wooting_usb_find_keyboard() {
 #ifdef DEBUG_LOG
     printf("Enumerate on Wooting 60HE (ARM) Successful\n");
 #endif
-    meta_func = set_meta_wooting_60he_arm;
+    walk_hid_devices(hid_info, set_meta_wooting_60he_arm);
   }
 
   enumerating = false;
