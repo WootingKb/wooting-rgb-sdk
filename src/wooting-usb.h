@@ -90,6 +90,8 @@ void wooting_usb_disconnect(bool trigger_cb);
 bool wooting_usb_find_keyboard(void);
 
 WOOTING_USB_META *wooting_usb_get_meta(void);
+WOOTINGRGBSDK_API WOOTING_USB_META *wooting_usb_get_device_meta(uint8_t device_index);
+
 WOOTINGRGBSDK_API uint8_t wooting_usb_keyboard_count(void);
 WOOTINGRGBSDK_API bool wooting_usb_select_device(uint8_t);
 WOOTINGRGBSDK_API bool wooting_usb_use_v2_interface(void);
