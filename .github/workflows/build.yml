@@ -112,7 +112,7 @@ jobs:
 
       - name: Zip files
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: vimtor/action-zip@v1
+        uses: vimtor/action-zip@v1.1
         with:
           files: dist/
           recursive: true
