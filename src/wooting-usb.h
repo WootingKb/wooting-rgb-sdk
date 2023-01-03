@@ -90,10 +90,23 @@ void wooting_usb_disconnect(bool trigger_cb);
 bool wooting_usb_find_keyboard(void);
 
 WOOTING_USB_META *wooting_usb_get_meta(void);
-WOOTINGRGBSDK_API WOOTING_USB_META *wooting_usb_get_device_meta(uint8_t device_index);
 
-WOOTINGRGBSDK_API uint8_t wooting_usb_keyboard_count(void);
+/// @brief Gets the meta struct of a particular device
+/// @param device_index Index of the device you want the meta of
+/// @return Pointer to the meta struct of the device, NULL if out of range
+WOOTINGRGBSDK_API WOOTING_USB_META *
+wooting_usb_get_device_meta(uint8_t device_index);
+
+/// @brief Returns the number of devices connected
+/// @return The number of devices connected
+WOOTINGRGBSDK_API uint8_t wooting_usb_device_count(void);
+
+/// @brief Selects a particular device as the receiver of following commands
+/// @param  device_index The index of the device to select
+/// @return true if the device was selected, false if the device index was out
+/// of range
 WOOTINGRGBSDK_API bool wooting_usb_select_device(uint8_t);
+
 WOOTINGRGBSDK_API bool wooting_usb_use_v2_interface(void);
 WOOTINGRGBSDK_API size_t wooting_usb_get_response_size(void);
 
