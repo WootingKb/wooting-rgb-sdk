@@ -29,11 +29,11 @@ jobs:
         if: startsWith(matrix.os, 'windows')
         uses: microsoft/setup-msbuild@v1.0.2
 
-      - name: Prepare Linux Build
-        run: |
-          sudo apt update
-          sudo apt install libhidapi-dev libhidapi-hidraw0
-        if: startsWith(matrix.os, 'ubuntu')
+      - name: Install dependencies
+        uses: ConorMacBride/install-package@v1
+        with:
+          brew: hidapi
+          apt: libhidapi-dev libhidapi-hidraw0
 
       - name: Build (Linux)
         if: startsWith(matrix.os, 'ubuntu')
