@@ -25,7 +25,7 @@ jobs:
           - os: windows-latest
             target: x64
           - os: windows-latest
-            target: Win32
+            target: x86
 
     steps:
       - uses: actions/checkout@v3
