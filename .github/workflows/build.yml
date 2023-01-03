@@ -17,6 +17,8 @@ permissions:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
 
     strategy:
       matrix:
@@ -71,7 +73,7 @@ jobs:
           R_TARGET=${{matrix.target}}
           TARGET=${R_TARGET:-x64}
           echo "TAG_VERSION=$VER" >> $GITHUB_ENV
-          echo "RELEASE_NAME=wooting-rgb-sdk-$VER-$OS_NAME-TARGET"
+          echo "RELEASE_NAME=wooting-rgb-sdk-$VER-$OS_NAME-$TARGET"
 
       - name: Copy dist files
         if: startsWith(github.ref, 'refs/tags/v')
@@ -107,3 +109,4 @@ jobs:
         with:
           files: ${{env.RELEASE_NAME}}.zip
           token: ${{ secrets.GITHUB_TOKEN }}
+          draft: true
