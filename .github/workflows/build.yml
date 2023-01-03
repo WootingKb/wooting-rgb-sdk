@@ -106,3 +106,4 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: ${{env.RELEASE_NAME}}.zip
+          token: ${{ secrets.GITHUB_TOKEN }}
