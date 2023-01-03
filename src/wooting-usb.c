@@ -38,10 +38,17 @@
 
 #define CFG_USAGE_PAGE 0x1337
 
-static WOOTING_USB_META wooting_usb_meta;
+static WOOTING_USB_META *wooting_usb_meta;
 
 static void_cb disconnected_callback = NULL;
 static hid_device *keyboard_handle = NULL;
+
+static WOOTING_USB_META wooting_usb_meta_array[WOOTING_MAX_RGB_DEVICES];
+static hid_device *keyboard_handle_array[WOOTING_MAX_RGB_DEVICES];
+
+static uint8_t connected_keyboards = 0;
+static bool enumerating = false;
+
 static void debug_print_buffer(uint8_t *buff, size_t len);
 
 static uint16_t getCrc16ccitt(const uint8_t *buffer, uint16_t size) {
@@ -63,108 +70,115 @@ static uint16_t getCrc16ccitt(const uint8_t *buffer, uint16_t size) {
 }
 
 typedef void (*set_meta_func)();
+void walk_hid_devices(struct hid_device_info* hid_info_walker, set_meta_func meta_func);
 
-static void reset_meta(void) {
-  wooting_usb_meta.connected = false;
+static void reset_meta(WOOTING_USB_META *device_meta) {
+  device_meta->connected = false;
 
-  wooting_usb_meta.model = "N/A";
-  wooting_usb_meta.device_type = -1;
-  wooting_usb_meta.max_rows = 0;
-  wooting_usb_meta.max_columns = 0;
-  wooting_usb_meta.led_index_max = 0;
-  wooting_usb_meta.v2_interface = false;
-  wooting_usb_meta.layout = LAYOUT_UNKNOWN;
+  device_meta->model = "N/A";
+  device_meta->device_type = -1;
+  device_meta->max_rows = 0;
+  device_meta->max_columns = 0;
+  device_meta->led_index_max = 0;
+  device_meta->v2_interface = false;
+  device_meta->layout = LAYOUT_UNKNOWN;
 }
 
-static void set_meta_wooting_one(void) {
-  wooting_usb_meta.model = "Wooting One";
-  wooting_usb_meta.device_type = DEVICE_KEYBOARD_TKL;
-  wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
-  wooting_usb_meta.max_columns = WOOTING_ONE_RGB_COLS;
-  wooting_usb_meta.led_index_max = WOOTING_ONE_KEY_CODE_LIMIT;
-  wooting_usb_meta.v2_interface = false;
+static void set_meta_wooting_one(WOOTING_USB_META *device_meta) {
+  device_meta->model = "Wooting One";
+  device_meta->device_type = DEVICE_KEYBOARD_TKL;
+  device_meta->max_rows = WOOTING_RGB_ROWS;
+  device_meta->max_columns = WOOTING_ONE_RGB_COLS;
+  device_meta->led_index_max = WOOTING_ONE_KEY_CODE_LIMIT;
+  device_meta->v2_interface = false;
 }
 
-static void set_meta_wooting_one_v2(void) {
-  set_meta_wooting_one();
-  wooting_usb_meta.v2_interface = true;
+static void set_meta_wooting_one_v2(WOOTING_USB_META *device_meta) {
+  set_meta_wooting_one(device_meta);
+  device_meta->v2_interface = true;
 }
 
-static void set_meta_wooting_two(void) {
-  wooting_usb_meta.model = "Wooting Two";
-  wooting_usb_meta.device_type = DEVICE_KEYBOARD;
-  wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
-  wooting_usb_meta.max_columns = WOOTING_TWO_RGB_COLS;
-  wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
-  wooting_usb_meta.v2_interface = false;
+static void set_meta_wooting_two(WOOTING_USB_META *device_meta) {
+  device_meta->model = "Wooting Two";
+  device_meta->device_type = DEVICE_KEYBOARD;
+  device_meta->max_rows = WOOTING_RGB_ROWS;
+  device_meta->max_columns = WOOTING_TWO_RGB_COLS;
+  device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
+  device_meta->v2_interface = false;
 }
 
-static void set_meta_wooting_two_v2(void) {
-  set_meta_wooting_two();
-  wooting_usb_meta.v2_interface = true;
+static void set_meta_wooting_two_v2(WOOTING_USB_META *device_meta) {
+  set_meta_wooting_two(device_meta);
+  device_meta->v2_interface = true;
 }
 
-static void set_meta_wooting_two_le(void) {
-  wooting_usb_meta.model = "Wooting Two Lekker Edition";
-  wooting_usb_meta.device_type = DEVICE_KEYBOARD;
-  wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
-  wooting_usb_meta.max_columns = WOOTING_TWO_RGB_COLS;
-  wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
-  wooting_usb_meta.v2_interface = true;
+static void set_meta_wooting_two_le(WOOTING_USB_META *device_meta) {
+  device_meta->model = "Wooting Two Lekker Edition";
+  device_meta->device_type = DEVICE_KEYBOARD;
+  device_meta->max_rows = WOOTING_RGB_ROWS;
+  device_meta->max_columns = WOOTING_TWO_RGB_COLS;
+  device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
+  device_meta->v2_interface = true;
 }
 
-static void set_meta_wooting_two_he(void) {
-  wooting_usb_meta.model = "Wooting Two HE";
-  wooting_usb_meta.device_type = DEVICE_KEYBOARD;
-  wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
-  wooting_usb_meta.max_columns = WOOTING_TWO_RGB_COLS;
-  wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
-  wooting_usb_meta.v2_interface = true;
+static void set_meta_wooting_two_he(WOOTING_USB_META *device_meta) {
+  device_meta->model = "Wooting Two HE";
+  device_meta->device_type = DEVICE_KEYBOARD;
+  device_meta->max_rows = WOOTING_RGB_ROWS;
+  device_meta->max_columns = WOOTING_TWO_RGB_COLS;
+  device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
+  device_meta->v2_interface = true;
 }
 
-static void set_meta_wooting_60he(void) {
-  wooting_usb_meta.model = "Wooting 60HE";
-  wooting_usb_meta.device_type = DEVICE_KEYBOARD_60;
-  wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
-  wooting_usb_meta.max_columns = 14;
-  wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
-  wooting_usb_meta.v2_interface = true;
+static void set_meta_wooting_60he(WOOTING_USB_META *device_meta) {
+  device_meta->model = "Wooting 60HE";
+  device_meta->device_type = DEVICE_KEYBOARD_60;
+  device_meta->max_rows = WOOTING_RGB_ROWS;
+  device_meta->max_columns = 14;
+  device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
+  device_meta->v2_interface = true;
 }
 
-static void set_meta_wooting_60he_arm(void) {
-  wooting_usb_meta.model = "Wooting 60HE (ARM)";
-  wooting_usb_meta.device_type = DEVICE_KEYBOARD_60;
-  wooting_usb_meta.max_rows = WOOTING_RGB_ROWS;
-  wooting_usb_meta.max_columns = 14;
-  wooting_usb_meta.led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
-  wooting_usb_meta.v2_interface = true;
+static void set_meta_wooting_60he_arm(WOOTING_USB_META *device_meta) {
+  device_meta->model = "Wooting 60HE (ARM)";
+  device_meta->device_type = DEVICE_KEYBOARD_60;
+  device_meta->max_rows = WOOTING_RGB_ROWS;
+  device_meta->max_columns = 14;
+  device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
+  device_meta->v2_interface = true;
 }
 
 WOOTING_USB_META *wooting_usb_get_meta() {
   // We want to initialise the struct to the default values if it hasn't been
   // set
-  if (wooting_usb_meta.model == NULL) {
-    reset_meta();
+  if (wooting_usb_meta->model == NULL) {
+    reset_meta(wooting_usb_meta);
   }
 
-  return &wooting_usb_meta;
+  return wooting_usb_meta;
 }
 
 bool wooting_usb_use_v2_interface(void) {
-  return wooting_usb_meta.v2_interface;
+  return wooting_usb_meta->v2_interface;
 }
 
 void wooting_usb_disconnect(bool trigger_cb) {
 #ifdef DEBUG_LOG
   printf("Keyboard disconnected\n");
 #endif
-  reset_meta();
-  hid_close(keyboard_handle);
-  keyboard_handle = NULL;
+  for (uint8_t i = 0; i < connected_keyboards; i++) {
+    reset_meta(&wooting_usb_meta_array[i]);
+    if (keyboard_handle_array[i]) {
+      hid_close(keyboard_handle_array[i]);
+      keyboard_handle_array[i] = keyboard_handle = NULL;
+    }
+  }
 
   if (trigger_cb && disconnected_callback) {
     disconnected_callback();
   }
+
+  connected_keyboards = 0;
 }
 
 void wooting_usb_set_disconnected_cb(void_cb cb) { disconnected_callback = cb; }
@@ -195,7 +209,7 @@ WOOTING_DEVICE_LAYOUT wooting_usb_get_layout() {
 }
 
 bool wooting_usb_find_keyboard() {
-  if (keyboard_handle) {
+  if (keyboard_handle || connected_keyboards > 0) {
     // #ifdef DEBUG_LOG
     // printf("Got keyboard handle already\n");
     // #endif
@@ -213,6 +227,9 @@ bool wooting_usb_find_keyboard() {
     // 	#endif
     // 	wooting_usb_disconnect(true);
     // }
+
+    // catch handle being empty despite having found keyboards
+    if (!keyboard_handle) wooting_usb_select_device(0);
     return true;
   } else {
 #ifdef DEBUG_LOG
@@ -220,138 +237,104 @@ bool wooting_usb_find_keyboard() {
 #endif
   }
 
+  // Initilize arrays to default values and allocate memory
+  for (uint8_t i = 0; i < WOOTING_MAX_RGB_DEVICES; i++) {
+    keyboard_handle_array[i] = NULL;
+  }
+
+  // Make sure pointers are the first element in the array
+  keyboard_handle = keyboard_handle_array[0];
+  wooting_usb_meta = &wooting_usb_meta_array[0];
+  reset_meta(wooting_usb_meta);
+
   struct hid_device_info *hid_info;
+
+  // Set enumerating flag
+  enumerating = true;
 
 #define PID_ALT_CHECK(base_pid)                                                \
   (hid_info = hid_enumerate(WOOTING_VID2, base_pid | V2_ALT_PID_0)) != NULL || \
-      (hid_info = hid_enumerate(WOOTING_VID2, base_pid | V2_ALT_PID_1)) !=     \
-          NULL ||                                                              \
-      (hid_info = hid_enumerate(WOOTING_VID2, base_pid | V2_ALT_PID_2)) !=     \
-          NULL
+    (hid_info = hid_enumerate(WOOTING_VID2, base_pid | V2_ALT_PID_1)) !=     \
+        NULL ||                                                              \
+    (hid_info = hid_enumerate(WOOTING_VID2, base_pid | V2_ALT_PID_2)) !=     \
+        NULL
 
-  reset_meta();
-  set_meta_func meta_func;
   if ((hid_info = hid_enumerate(WOOTING_VID, WOOTING_ONE_PID)) != NULL) {
 #ifdef DEBUG_LOG
     printf("Enumerate on Wooting One Successful\n");
 #endif
-    meta_func = set_meta_wooting_one;
-  } else if (PID_ALT_CHECK(WOOTING_ONE_V2_PID)) {
+    walk_hid_devices(hid_info, set_meta_wooting_one);
+  } 
+  if (PID_ALT_CHECK(WOOTING_ONE_V2_PID)) {
 #ifdef DEBUG_LOG
     printf("Enumerate on Wooting One (V2) Successful\n");
 #endif
-    meta_func = set_meta_wooting_one_v2;
-  } else if ((hid_info = hid_enumerate(WOOTING_VID, WOOTING_TWO_PID)) != NULL) {
+    walk_hid_devices(hid_info, set_meta_wooting_one_v2);
+  } 
+  if ((hid_info = hid_enumerate(WOOTING_VID, WOOTING_TWO_PID)) != NULL) {
 #ifdef DEBUG_LOG
     printf("Enumerate on Wooting Two Successful\n");
 #endif
-    meta_func = set_meta_wooting_two;
-  } else if (PID_ALT_CHECK(WOOTING_TWO_V2_PID)) {
+    walk_hid_devices(hid_info, set_meta_wooting_two);
+  } 
+  if (PID_ALT_CHECK(WOOTING_TWO_V2_PID)) {
 #ifdef DEBUG_LOG
     printf("Enumerate on Wooting Two (V2) Successful\n");
 #endif
-    meta_func = set_meta_wooting_two_v2;
-  } else if (PID_ALT_CHECK(WOOTING_TWO_LE_PID)) {
+    walk_hid_devices(hid_info, set_meta_wooting_two_v2);
+  }
+  if (PID_ALT_CHECK(WOOTING_TWO_LE_PID)) {
 #ifdef DEBUG_LOG
     printf("Enumerate on Wooting Two Lekker Edition Successful\n");
 #endif
-    meta_func = set_meta_wooting_two_le;
-  } else if (PID_ALT_CHECK(WOOTING_TWO_HE_PID)) {
+    walk_hid_devices(hid_info, set_meta_wooting_two_le);
+  }
+  if (PID_ALT_CHECK(WOOTING_TWO_HE_PID)) {
 #ifdef DEBUG_LOG
     printf("Enumerate on Wooting Two HE Successful\n");
 #endif
-    meta_func = set_meta_wooting_two_he;
-  } else if (PID_ALT_CHECK(WOOTING_60HE_PID)) {
+    walk_hid_devices(hid_info, set_meta_wooting_two_he);
+  }
+  if (PID_ALT_CHECK(WOOTING_60HE_PID)) {
 #ifdef DEBUG_LOG
     printf("Enumerate on Wooting 60HE Successful\n");
 #endif
-    meta_func = set_meta_wooting_60he;
+    walk_hid_devices(hid_info, set_meta_wooting_60he);
   } else if (PID_ALT_CHECK(WOOTING_60HE_ARM_PID)) {
 #ifdef DEBUG_LOG
     printf("Enumerate on Wooting 60HE (ARM) Successful\n");
 #endif
-    meta_func = set_meta_wooting_60he_arm;
-  } else {
+    walk_hid_devices(hid_info, set_meta_wooting_60he_arm);
+  }
+
+  enumerating = false;
+  
+  if (connected_keyboards == 0) {
 #ifdef DEBUG_LOG
     printf("Enumerate failed\n");
 #endif
     return false;
   }
 
-  bool keyboard_found = false;
-
-#ifdef LEGACY_DETECTION
-  // The amount of interfaces is variable, so we need to look for the
-  // configuration interface In the Wooting one keyboard the configuration
-  // interface is always 4 lower than the highest number
-  struct hid_device_info *hid_info_walker = hid_info;
-  uint8_t highestInterfaceNr = 0;
-  while (hid_info_walker) {
-    if (hid_info_walker->interface_number > highestInterfaceNr) {
-      highestInterfaceNr = hid_info_walker->interface_number;
-    }
-    hid_info_walker = hid_info_walker->next;
-  }
-
-  uint8_t interfaceNr = highestInterfaceNr - 4;
+  // Set first found device as default after hid walking
+  wooting_usb_select_device(0);
 
 #ifdef DEBUG_LOG
-  printf("Higest Interface No: %d, Search interface No: %d\n",
-         highestInterfaceNr, interfaceNr);
+  printf("Finished looking for keyboards returned: %d\n", connected_keyboards);
 #endif
+  return connected_keyboards > 0;
+}
 
-  // Reset walker and look for the interface number
-  hid_info_walker = hid_info;
-  while (hid_info_walker) {
-#ifdef DEBUG_LOG
-    printf("Found interface No: %d\n", hid_info_walker->interface_number);
-    printf("Found usage page: %d\n", hid_info_walker->usage_page);
-#endif
-    if (hid_info_walker->interface_number == interfaceNr) {
-#ifdef DEBUG_LOG
-      printf("Attempting to open\n");
-#endif
-      keyboard_handle = hid_open_path(hid_info_walker->path);
-      if (keyboard_handle) {
-#ifdef DEBUG_LOG
-        printf("Found keyboard_handle: %s\n", hid_info_walker->path);
-#endif
-// Once the keyboard is found send an init command and abuse two reads to make a
-// 50 ms delay to make sure the keyboard is ready
-#ifdef DEBUG_LOG
-        bool result =
-#endif
-            wooting_usb_send_feature(WOOTING_COLOR_INIT_COMMAND, 0, 0, 0, 0);
-#ifdef DEBUG_LOG
-        printf("Color init result: %d\n", result);
-#endif
-        unsigned char stub = 0;
-        hid_read(keyboard_handle, &stub, 0);
-        hid_read_timeout(keyboard_handle, &stub, 0, 50);
-
-        keyboard_found = true;
-      } else {
-#ifdef DEBUG_LOG
-        printf("No Keyboard handle: %S\n", hid_error(NULL));
-#endif
-      }
-      break;
-    }
-
-    hid_info_walker = hid_info_walker->next;
-  }
-#else
-
+void walk_hid_devices(struct hid_device_info *hid_info_walker, set_meta_func meta_func) {
   // We can just search for the interface with matching custom Wooting Cfg usage
   // page
-  struct hid_device_info *hid_info_walker = hid_info;
   while (hid_info_walker) {
+    if (connected_keyboards == WOOTING_MAX_RGB_DEVICES) break;
 #ifdef DEBUG_LOG
     printf("Found interface No: %d\n", hid_info_walker->interface_number);
     printf("Found usage page: %d\n", hid_info_walker->usage_page);
 #endif
     if (hid_info_walker->usage_page == CFG_USAGE_PAGE) {
-
 #ifdef DEBUG_LOG
       printf("Attempting to open\n");
 #endif
@@ -359,45 +342,69 @@ bool wooting_usb_find_keyboard() {
       if (keyboard_handle) {
 #ifdef DEBUG_LOG
         printf("Found keyboard_handle: %s\n", hid_info_walker->path);
+        printf("Opened handle: %p\n", keyboard_handle);
 #endif
 
-        keyboard_found = true;
-      } else {
+        // Update pointer array and meta
+        keyboard_handle_array[connected_keyboards] = keyboard_handle;
+        meta_func(&wooting_usb_meta_array[connected_keyboards]);
+        (&wooting_usb_meta_array[connected_keyboards])->connected = true;
+
+        // Any feature sends need to be done after the meta is set so the correct value
+        // for v2_interface is set
+
+        // Once the keyboard is found send an init command
+#ifdef DEBUG_LOG
+        bool result =
+#endif
+          wooting_usb_send_feature(WOOTING_COLOR_INIT_COMMAND, 0, 0, 0, 0);
+#ifdef DEBUG_LOG
+        printf("Color init result: %d\n", result);
+#endif
+
+        (&wooting_usb_meta_array[connected_keyboards])->layout = wooting_usb_get_layout();
+
+        // Increment found keyboard count and switch to the next element in the array
+        connected_keyboards++;
+      }
+      else {
 #ifdef DEBUG_LOG
         printf("No Keyboard handle: %S\n", hid_error(NULL));
 #endif
       }
-      break;
     }
     hid_info_walker = hid_info_walker->next;
   }
 
-#endif
-
-  hid_free_enumeration(hid_info);
-  if (keyboard_found) {
-    meta_func();
-    wooting_usb_meta.connected = true;
-
-// Any feature sends need to be done after the meta is set so the correct value
-// for v2_interface is set
-
-// Once the keyboard is found send an init command
-#ifdef DEBUG_LOG
-    bool result =
-#endif
-        wooting_usb_send_feature(WOOTING_COLOR_INIT_COMMAND, 0, 0, 0, 0);
-#ifdef DEBUG_LOG
-    printf("Color init result: %d\n", result);
-#endif
-
-    wooting_usb_meta.layout = wooting_usb_get_layout();
-  }
-#ifdef DEBUG_LOG
-  printf("Finished looking for keyboard returned: %d\n", keyboard_found);
-#endif
-  return keyboard_found;
+  hid_free_enumeration(hid_info_walker);
 }
+
+bool wooting_usb_select_device(uint8_t device_index) {
+  // Only change device if the given index is valid
+  if (device_index < 0 || device_index >= WOOTING_MAX_RGB_DEVICES || (device_index >= connected_keyboards && !enumerating)) return false;
+
+  // Fetch pointer and meta data from arrays
+  keyboard_handle = keyboard_handle_array[device_index];
+  wooting_usb_meta = &wooting_usb_meta_array[device_index];
+  // Initilize meta data should it somehow be empty
+  if (wooting_usb_meta->model == NULL) reset_meta(wooting_usb_meta);
+
+#ifdef DEBUG_LOG
+  printf("Keyboard handle: %p | Model: %s\n", keyboard_handle, wooting_usb_meta->model);
+#endif
+
+  return true;
+}
+
+WOOTING_USB_META *wooting_usb_get_device_meta(uint8_t device_index) {
+  // Only change device if the given index is valid
+  if (device_index < 0 || device_index >= WOOTING_MAX_RGB_DEVICES || (device_index >= connected_keyboards && !enumerating)) return NULL;
+
+  // Fetch pointer and meta data from arrays
+  return &wooting_usb_meta_array[device_index];
+}
+
+uint8_t wooting_usb_keyboard_count() { return connected_keyboards; }
 
 bool wooting_usb_send_buffer_v1(RGB_PARTS part_number, uint8_t rgb_buffer[]) {
   if (!wooting_usb_find_keyboard()) {
@@ -434,7 +441,7 @@ bool wooting_usb_send_buffer_v1(RGB_PARTS part_number, uint8_t rgb_buffer[]) {
   // wooting_rgb_array_update_keyboard will not run into this
   case PART4: {
     // Wooting One will not have this part of the report
-    if (wooting_usb_meta.device_type != DEVICE_KEYBOARD) {
+    if (wooting_usb_meta->device_type != DEVICE_KEYBOARD) {
       return false;
     }
     report_buffer[4] = 2; // Slave nr
