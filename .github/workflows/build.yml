@@ -81,17 +81,17 @@ jobs:
           cp src/*.h dist/
 
           # Copy Mac files
-          cp mac/*.pc dist/ 2>/dev/null
-          cp mac/*.dylib dist/ 2>/dev/null
+          cp mac/*.pc dist/ || true
+          cp mac/*.dylib dist/ || true
 
           # Copy Linux files
-          cp linux/*.pc dist/ 2>/dev/null
-          cp linux/*.so dist/ 2>/dev/null
+          cp linux/*.pc dist/ || true
+          cp linux/*.so dist/ || true
 
           # Copy Windows x64 files
-          cp windows/${{env.BUILD_CONFIGURATION}}/*.dll dist/ 2>/dev/null
-          cp windows/${{env.BUILD_CONFIGURATION}}/*.lib dist/ 2>/dev/null
-          cp windows/${{env.BUILD_CONFIGURATION}}/*.pdb dist/ 2>/dev/null
+          cp windows/${{env.BUILD_CONFIGURATION}}/*.dll dist/ || true
+          cp windows/${{env.BUILD_CONFIGURATION}}/*.lib dist/ || true
+          cp windows/${{env.BUILD_CONFIGURATION}}/*.pdb dist/ || true
 
       - name: Zip files
         if: startsWith(github.ref, 'refs/tags/v')
