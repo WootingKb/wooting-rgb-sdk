@@ -34,7 +34,7 @@ jobs:
 
       - name: Add MSBuild to PATH (Windows)
         if: startsWith(matrix.os, 'windows')
-        uses: microsoft/setup-msbuild@v1.0.2
+        uses: microsoft/setup-msbuild@v1.1
 
       - name: Install dependencies
         uses: ConorMacBride/install-package@v1
