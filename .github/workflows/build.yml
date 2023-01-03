@@ -46,11 +46,11 @@ jobs:
 
       - name: Build (Linux)
         if: startsWith(matrix.os, 'ubuntu')
-        run: cd linux && make
+        run: cd linux && make CDEFS="-Werror"
 
       - name: Build (Mac)
         if: startsWith(matrix.os, 'mac')
-        run: cd mac && make
+        run: cd mac && make CDEFS="-Werror"
 
       # - name: Restore NuGet packages
       #   working-directory: ${{env.GITHUB_WORKSPACE}}

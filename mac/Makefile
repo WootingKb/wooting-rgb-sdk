@@ -3,7 +3,8 @@ all: libwooting-rgb-sdk.dylib
 prefix ?= /usr/local
 
 CC ?= gcc
-CFLAGS ?= -Wall -g -fPIC
+CDEFS=
+CFLAGS ?= -Wall -g -fPIC ${CDEFS}
 CPPFLAGS ?= #-DDEBUG_LOG
 LDFLAGS ?= -Wall -g
 
