@@ -32,7 +32,7 @@ jobs:
       - name: Prepare Linux Build
         run: |
           sudo apt update
-          sudo apt install libusb-1.0-0 libusb-1.0-0-dev libudev-dev
+          sudo apt install libhidapi-dev libhidapi-hidraw0
         if: startsWith(matrix.os, 'ubuntu')
 
       - name: Build (Linux)
