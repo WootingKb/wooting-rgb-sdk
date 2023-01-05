@@ -201,6 +201,7 @@ bool wooting_rgb_array_update_keyboard() {
       rgb_buffer_matrix_changed = false;
     }
   } else {
+    if (!rgb_buffer_matrix_changed) return false;
     if(!wooting_rgb_build_v1_buffers()) return false;
 
     if (!wooting_usb_send_buffer_v1(PART0, rgb_buffer0)) {
@@ -224,6 +225,8 @@ bool wooting_rgb_array_update_keyboard() {
         return false;
       }
     }
+
+    rgb_buffer_matrix_changed = false;
   }
   return true;
 }
