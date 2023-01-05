@@ -195,7 +195,7 @@ bool wooting_rgb_array_update_keyboard() {
 
   if (wooting_usb_use_v2_interface()) {
     if (rgb_buffer_matrix_changed) {
-      if (!wooting_usb_send_buffer_v2(rgb_buffer_matrix)) {
+      if (!wooting_usb_send_buffer_v2(*rgb_buffer_matrix)) {
         return false;
       }
       rgb_buffer_matrix_changed = false;
@@ -234,7 +234,7 @@ bool wooting_rgb_array_update_keyboard() {
 static bool wooting_rgb_array_change_single(uint8_t row, uint8_t column,
                                             uint8_t red, uint8_t green,
                                             uint8_t blue) {
-  uint16_t prevValue = rgb_buffer_matrix[row][column];
+  uint16_t prevValue = *rgb_buffer_matrix[row][column];
   uint16_t newValue = encodeColor(red, green, blue);
   if (newValue != prevValue) {
     *rgb_buffer_matrix[row][column] = newValue;
@@ -347,7 +347,7 @@ bool wooting_rgb_build_v1_buffers() {
 
 bool wooting_rgb_select_buffer(uint8_t buffer_index) {
   // Fetch pointer and buffer data from arrays
-  rgb_buffer_matrix = *rgb_buffer_matrix_array[buffer_index];
+  rgb_buffer_matrix = rgb_buffer_matrix_array[buffer_index];
 
   return true;
 }
