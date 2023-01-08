@@ -347,7 +347,7 @@ bool wooting_rgb_build_v1_buffers() {
 
 bool wooting_rgb_select_buffer(uint8_t buffer_index) {
   // Fetch pointer and buffer data from arrays
-  rgb_buffer_matrix = rgb_buffer_matrix_array[buffer_index];
+  rgb_buffer_matrix = &rgb_buffer_matrix_array[buffer_index];
 
   return true;
 }
