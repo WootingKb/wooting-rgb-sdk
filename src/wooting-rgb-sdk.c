@@ -53,7 +53,7 @@ static uint8_t gammaFilter[256] = {
     215, 218, 220, 223, 225, 228, 231, 233, 236, 239, 241, 244, 247, 249, 252,
     255};
 
-static WOOTING_RGB_MATRIX *rgb_buffer_matrix_array[WOOTING_MAX_RGB_DEVICES];
+static WOOTING_RGB_MATRIX rgb_buffer_matrix_array[WOOTING_MAX_RGB_DEVICES];
 static WOOTING_RGB_MATRIX *rgb_buffer_matrix;
 static bool rgb_buffer_matrix_changed = false;
 
@@ -234,10 +234,10 @@ bool wooting_rgb_array_update_keyboard() {
 static bool wooting_rgb_array_change_single(uint8_t row, uint8_t column,
                                             uint8_t red, uint8_t green,
                                             uint8_t blue) {
-  uint16_t prevValue = *rgb_buffer_matrix[row][column];
+  uint16_t prevValue = (*rgb_buffer_matrix)[row][column];
   uint16_t newValue = encodeColor(red, green, blue);
   if (newValue != prevValue) {
-    *rgb_buffer_matrix[row][column] = newValue;
+    (*rgb_buffer_matrix)[row][column] = newValue;
     rgb_buffer_matrix_changed = true;
   }
 
