@@ -508,6 +508,16 @@ bool wooting_usb_send_buffer_v2(
     printf("Successfully sent V2 buffer...\n");
 #endif
     return true;
+  } else if (report_size == 65) {
+    for (uint8_t i = 0; i < 3; i++) {
+      uint8_t child_buff[65] = {0};
+      memcpy(&child_buff[1], &report_buffer[((i + 1) * 64) + 1], 64);
+      int child_report = hid_write(keyboard_handle, child_buff, 65);
+#ifdef DEBUG_LOG
+      printf("Child report size: %d\n", child_report)
+#endif
+    }
+
   } else {
 #ifdef DEBUG_LOG
     printf("Got report size: %d, expected: %d, disconnecting..\n", report_size,
