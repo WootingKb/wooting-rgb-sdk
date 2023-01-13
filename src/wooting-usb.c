@@ -19,6 +19,8 @@
 #define WOOTING_V1_RESPONSE_SIZE 128
 #define WOOTING_V2_RESPONSE_SIZE 256
 
+#define WOOTING_READ_RESPONSE_TIMEOUT 1000
+
 #define WOOTING_VID 0x03EB
 #define WOOTING_VID2 0x31e3
 
@@ -595,9 +597,14 @@ bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0,
       commandId, parameter0, parameter1, parameter2, parameter3);
   size_t response_size = wooting_usb_get_response_size();
 
+#ifdef DEBUG_LOG
+  printf("Feature sent, Reading response\n");
+#endif
+
   // Just read the response and discard it
   uint8_t *buff = (uint8_t *)calloc(response_size, sizeof(uint8_t));
-  int result = wooting_usb_read_response(buff, response_size);
+  int result = wooting_usb_read_response_timeout(buff, response_size,
+                                                 WOOTING_READ_RESPONSE_TIMEOUT);
   free(buff);
 #ifdef DEBUG_LOG
   printf("Read result %d \n", result);
@@ -633,7 +640,8 @@ int wooting_usb_send_feature_with_response(
     size_t response_size = wooting_usb_get_response_size();
     uint8_t *responseBuff = (uint8_t *)calloc(response_size, sizeof(uint8_t));
 
-    int result = wooting_usb_read_response(responseBuff, response_size);
+    int result = wooting_usb_read_response_timeout(
+        responseBuff, response_size, WOOTING_READ_RESPONSE_TIMEOUT);
 
     if (result == response_size) {
       memcpy(buff, responseBuff, len);
@@ -673,9 +681,24 @@ static void debug_print_buffer(uint8_t *buff, size_t len) {
 int wooting_usb_read_response_timeout(uint8_t *buff, size_t len,
                                       int milliseconds) {
   int result = hid_read_timeout(keyboard_handle, buff, len, milliseconds);
+  if (result <= 0) {
+#ifdef DEBUG_LOG
+    printf("hid_read_timeout %d error on first read\n", result);
+#endif
+    return result;
+  }
+
   while (result < len) {
-    result += hid_read_timeout(keyboard_handle, buff + result, len - result,
-                               milliseconds);
+    int r = hid_read_timeout(keyboard_handle, buff + result, len - result,
+                             milliseconds);
+    if (r <= 0) {
+#ifdef DEBUG_LOG
+      printf("hid_read_timeout %d error while reading slice %d\n", r, result);
+#endif
+      return r;
+    } else {
+      result += r;
+    }
   }
 #ifdef DEBUG_LOG
   printf("hid_read_timeout result code: %d\n", result);
@@ -685,13 +708,5 @@ int wooting_usb_read_response_timeout(uint8_t *buff, size_t len,
 }
 
 int wooting_usb_read_response(uint8_t *buff, size_t len) {
-  int result = hid_read(keyboard_handle, buff, len);
-  while (result < len) {
-    result += hid_read(keyboard_handle, buff + result, len - result);
-  }
-#ifdef DEBUG_LOG
-  printf("hid_read result code: %d\n", result);
-#endif
-  debug_print_buffer(buff, len);
-  return result;
+  return wooting_usb_read_response_timeout(buff, len, -1);
 }
