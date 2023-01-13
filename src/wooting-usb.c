@@ -14,6 +14,8 @@
 #define WOOTING_COMMAND_SIZE 8
 #define WOOTING_REPORT_SIZE 128 + 1
 #define WOOTING_V2_REPORT_SIZE 256 + 1
+#define WOOTING_SMALL_PACKET_SIZE 64
+#define WOOTING_SMALL_PACKET_COUNT 4
 #define WOOTING_V1_RESPONSE_SIZE 128
 #define WOOTING_V2_RESPONSE_SIZE 256
 
@@ -84,6 +86,7 @@ static void reset_meta(WOOTING_USB_META *device_meta) {
   device_meta->led_index_max = 0;
   device_meta->v2_interface = false;
   device_meta->layout = LAYOUT_UNKNOWN;
+  device_meta->uses_small_packets = false;
 }
 
 static void set_meta_wooting_one(WOOTING_USB_META *device_meta) {
@@ -93,6 +96,7 @@ static void set_meta_wooting_one(WOOTING_USB_META *device_meta) {
   device_meta->max_columns = WOOTING_ONE_RGB_COLS;
   device_meta->led_index_max = WOOTING_ONE_KEY_CODE_LIMIT;
   device_meta->v2_interface = false;
+  device_meta->uses_small_packets = false;
 }
 
 static void set_meta_wooting_one_v2(WOOTING_USB_META *device_meta) {
@@ -107,6 +111,7 @@ static void set_meta_wooting_two(WOOTING_USB_META *device_meta) {
   device_meta->max_columns = WOOTING_TWO_RGB_COLS;
   device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
   device_meta->v2_interface = false;
+  device_meta->uses_small_packets = false;
 }
 
 static void set_meta_wooting_two_v2(WOOTING_USB_META *device_meta) {
@@ -121,6 +126,7 @@ static void set_meta_wooting_two_le(WOOTING_USB_META *device_meta) {
   device_meta->max_columns = WOOTING_TWO_RGB_COLS;
   device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
   device_meta->v2_interface = true;
+  device_meta->uses_small_packets = false;
 }
 
 static void set_meta_wooting_two_he(WOOTING_USB_META *device_meta) {
@@ -130,6 +136,7 @@ static void set_meta_wooting_two_he(WOOTING_USB_META *device_meta) {
   device_meta->max_columns = WOOTING_TWO_RGB_COLS;
   device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
   device_meta->v2_interface = true;
+  device_meta->uses_small_packets = false;
 }
 
 static void set_meta_wooting_60he(WOOTING_USB_META *device_meta) {
@@ -139,6 +146,7 @@ static void set_meta_wooting_60he(WOOTING_USB_META *device_meta) {
   device_meta->max_columns = 14;
   device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
   device_meta->v2_interface = true;
+  device_meta->uses_small_packets = false;
 }
 
 static void set_meta_wooting_60he_arm(WOOTING_USB_META *device_meta) {
@@ -148,6 +156,7 @@ static void set_meta_wooting_60he_arm(WOOTING_USB_META *device_meta) {
   device_meta->max_columns = 14;
   device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
   device_meta->v2_interface = true;
+  device_meta->uses_small_packets = true;
 }
 
 WOOTING_USB_META *wooting_usb_get_meta() {
@@ -501,30 +510,47 @@ bool wooting_usb_send_buffer_v2(
   memcpy(&report_buffer[4], rgb_buffer,
          WOOTING_RGB_ROWS * WOOTING_RGB_COLS * sizeof(uint16_t));
 
-  int report_size =
-      hid_write(keyboard_handle, report_buffer, WOOTING_V2_REPORT_SIZE);
-  if (report_size == WOOTING_V2_REPORT_SIZE) {
+  if (wooting_usb_get_meta()->uses_small_packets) {
 #ifdef DEBUG_LOG
-    printf("Successfully sent V2 buffer...\n");
+    printf("Sending v2 buffer using small packets\n");
 #endif
-    return true;
-  } else if (report_size == 65) {
-    for (uint8_t i = 0; i < 3; i++) {
-      uint8_t child_buff[65] = {0};
-      memcpy(&child_buff[1], &report_buffer[((i + 1) * 64) + 1], 64);
-      int child_report = hid_write(keyboard_handle, child_buff, 65);
-#ifdef DEBUG_LOG
-      printf("Child report size: %d\n", child_report)
-#endif
-    }
+    for (uint8_t i = 0; i < WOOTING_SMALL_PACKET_COUNT; i++) {
+      // We have +1 on the packet size for both the buff and what we send as we
+      // need to have the report index at the start
+      uint8_t child_buff[WOOTING_SMALL_PACKET_SIZE + 1] = {0};
+      memcpy(&child_buff[1],
+             &report_buffer[(i * WOOTING_SMALL_PACKET_SIZE) + 1],
+             WOOTING_SMALL_PACKET_SIZE);
+      int child_report =
+          hid_write(keyboard_handle, child_buff, WOOTING_SMALL_PACKET_SIZE + 1);
 
-  } else {
+      if (child_report != WOOTING_SMALL_PACKET_SIZE + 1) {
 #ifdef DEBUG_LOG
-    printf("Got report size: %d, expected: %d, disconnecting..\n", report_size,
-           WOOTING_V2_REPORT_SIZE);
+        printf("Got report size from small buffer no %d: %d, expected: %d, "
+               "disconnecting..\n",
+               i, child_report, WOOTING_SMALL_PACKET_SIZE + 1);
 #endif
-    wooting_usb_disconnect(true);
-    return false;
+        wooting_usb_disconnect(true);
+        return false;
+      }
+    }
+    return true;
+  } else {
+    int report_size =
+        hid_write(keyboard_handle, report_buffer, WOOTING_V2_REPORT_SIZE);
+    if (report_size == WOOTING_V2_REPORT_SIZE) {
+#ifdef DEBUG_LOG
+      printf("Successfully sent V2 buffer...\n");
+#endif
+      return true;
+    } else {
+#ifdef DEBUG_LOG
+      printf("Got report size: %d, expected: %d, disconnecting..\n",
+             report_size, WOOTING_V2_REPORT_SIZE);
+#endif
+      wooting_usb_disconnect(true);
+      return false;
+    }
   }
 }
 
