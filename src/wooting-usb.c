@@ -614,8 +614,10 @@ bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0,
     return true;
   } else {
 #ifdef DEBUG_LOG
-    printf("Got command size: %d, expected: %d, disconnecting..\n",
-           command_size, WOOTING_COMMAND_SIZE);
+    printf(
+        "Got command size: %d, expected: %d, Got reponse size: %d, expected: "
+        "%d, disconnecting..\n",
+        command_size, WOOTING_COMMAND_SIZE, result, (int)response_size);
 #endif
 
     wooting_usb_disconnect(true);
