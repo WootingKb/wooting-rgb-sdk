@@ -55,7 +55,6 @@ static uint8_t gammaFilter[256] = {
 
 static WOOTING_RGB_MATRIX rgb_buffer_matrix_array[WOOTING_MAX_RGB_DEVICES];
 static WOOTING_RGB_MATRIX *rgb_buffer_matrix;
-static bool rgb_buffer_matrix_changed = false;
 
 // Converts the array index to a memory location in the RGB buffers
 static uint8_t get_safe_led_idex(uint8_t row, uint8_t column) {
@@ -194,14 +193,10 @@ bool wooting_rgb_array_update_keyboard() {
   }
 
   if (wooting_usb_use_v2_interface()) {
-    if (rgb_buffer_matrix_changed) {
       if (!wooting_usb_send_buffer_v2(*rgb_buffer_matrix)) {
         return false;
       }
-      rgb_buffer_matrix_changed = false;
-    }
   } else {
-    if (!rgb_buffer_matrix_changed) return false;
     if(!wooting_rgb_build_v1_buffers()) return false;
 
     if (!wooting_usb_send_buffer_v1(PART0, rgb_buffer0)) {
@@ -225,8 +220,6 @@ bool wooting_rgb_array_update_keyboard() {
         return false;
       }
     }
-
-    rgb_buffer_matrix_changed = false;
   }
   return true;
 }
@@ -238,7 +231,6 @@ static bool wooting_rgb_array_change_single(uint8_t row, uint8_t column,
   uint16_t newValue = encodeColor(red, green, blue);
   if (newValue != prevValue) {
     (*rgb_buffer_matrix)[row][column] = newValue;
-    rgb_buffer_matrix_changed = true;
   }
 
   return true;
