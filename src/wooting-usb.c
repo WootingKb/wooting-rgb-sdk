@@ -10,6 +10,7 @@
 #include "hidapi.h"
 #include "stdlib.h"
 #include "string.h"
+#include "wooting-rgb-sdk.h"
 
 #define WOOTING_COMMAND_SIZE 8
 #define WOOTING_REPORT_SIZE 128 + 1
@@ -38,6 +39,7 @@
 #define WOOTING_TWO_LE_PID 0x1210
 
 #define WOOTING_TWO_HE_PID 0x1220
+#define WOOTING_TWO_HE_ARM_PID 0x1230
 #define WOOTING_60HE_PID 0x1300
 #define WOOTING_60HE_ARM_PID 0x1310
 
@@ -139,6 +141,15 @@ static void set_meta_wooting_two_he(WOOTING_USB_META *device_meta) {
   device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
   device_meta->v2_interface = true;
   device_meta->uses_small_packets = false;
+}
+
+static void set_meta_wooting_two_he_arm(WOOTING_USB_META *device_meta) {
+  device_meta->model = "Wooting Two HE (ARM)";
+  device_meta->device_type = DEVICE_KEYBOARD;
+  device_meta->max_rows = WOOTING_RGB_ROWS;
+  device_meta->max_columns = WOOTING_TWO_RGB_COLS;
+  device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
+  device_meta->v2_interface = true;
 }
 
 static void set_meta_wooting_60he(WOOTING_USB_META *device_meta) {
@@ -308,6 +319,12 @@ bool wooting_usb_find_keyboard() {
     printf("Enumerate on Wooting Two HE Successful\n");
 #endif
     walk_hid_devices(hid_info, set_meta_wooting_two_he);
+  }
+  if (PID_ALT_CHECK(WOOTING_TWO_HE_ARM_PID)) {
+#ifdef DEBUG_LOG
+    printf("Enumerate on Wooting Two HE Successful\n");
+#endif
+    walk_hid_devices(hid_info, set_meta_wooting_two_he_arm);
   }
   if (PID_ALT_CHECK(WOOTING_60HE_PID)) {
 #ifdef DEBUG_LOG
