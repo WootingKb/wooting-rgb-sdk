@@ -90,6 +90,13 @@ static inline uint16_t encodeColor(uint8_t red, uint8_t green, uint8_t blue) {
   return encode;
 }
 
+static inline void decodeColor(uint16_t color, uint8_t *red, uint8_t *green,
+                               uint8_t *blue) {
+  *red = (color >> 8) & 0xf8;
+  *green = (color >> 3) & 0xfc;
+  *blue = (color << 3) & 0xf8;
+}
+
 bool wooting_rgb_kbd_connected() { return wooting_usb_find_keyboard(); }
 
 void wooting_rgb_set_disconnected_cb(void_cb cb) {
@@ -193,11 +200,12 @@ bool wooting_rgb_array_update_keyboard() {
   }
 
   if (wooting_usb_use_v2_interface()) {
-      if (!wooting_usb_send_buffer_v2(*rgb_buffer_matrix)) {
-        return false;
-      }
+    if (!wooting_usb_send_buffer_v2(*rgb_buffer_matrix)) {
+      return false;
+    }
   } else {
-    if(!wooting_rgb_build_v1_buffers()) return false;
+    if (!wooting_rgb_build_v1_buffers())
+      return false;
 
     if (!wooting_usb_send_buffer_v1(PART0, rgb_buffer0)) {
       return false;
@@ -294,7 +302,7 @@ bool wooting_rgb_build_v1_buffers() {
       0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d};
 
   uint8_t *buffer_pointer;
-  
+
   for (int row = 0; row < WOOTING_RGB_ROWS; row++) {
     for (int column = 0; column < WOOTING_RGB_COLS; column++) {
       uint8_t led_index = get_safe_led_idex(row, column);
@@ -316,9 +324,14 @@ bool wooting_rgb_build_v1_buffers() {
       }
 
       uint8_t buffer_index = pwm_mem_map[led_index % 24];
-      buffer_pointer[buffer_index] = gammaFilter[*rgb_buffer_matrix[row][column]];
-      buffer_pointer[buffer_index + 0x10] = gammaFilter[*rgb_buffer_matrix[row][column]];
-      buffer_pointer[buffer_index + 0x20] = gammaFilter[*rgb_buffer_matrix[row][column]];
+      uint16_t key_colour = (*rgb_buffer_matrix)[row][column];
+
+      uint8_t red, green, blue;
+      decodeColor(key_colour, &red, &green, &blue);
+
+      buffer_pointer[buffer_index] = gammaFilter[red];
+      buffer_pointer[buffer_index + 0x10] = gammaFilter[green];
+      buffer_pointer[buffer_index + 0x20] = gammaFilter[blue];
 
       if (led_index == LED_ENTER_ANSI) {
         uint8_t iso_enter_index = pwm_mem_map[LED_ENTER_ISO - 48];
