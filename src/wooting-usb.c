@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 #include "wooting-usb.h"
+#include "wooting-rgb-sdk.h"
 #include "hidapi.h"
 #include "stdlib.h"
 #include "string.h"
@@ -396,6 +397,8 @@ bool wooting_usb_select_device(uint8_t device_index) {
   // Initilize meta data should it somehow be empty
   if (wooting_usb_meta->model == NULL)
     reset_meta(wooting_usb_meta);
+
+  wooting_rgb_select_buffer(device_index);
 
 #ifdef DEBUG_LOG
   printf("Keyboard handle: %p | Model: %s\n", keyboard_handle,

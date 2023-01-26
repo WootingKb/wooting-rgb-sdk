@@ -26,6 +26,21 @@ extern "C" {
 #include "stdint.h"
 #include "wooting-usb.h"
 
+/**
+ * Type so we can have a pointer array for this
+*/
+typedef uint16_t WOOTING_RGB_MATRIX[WOOTING_RGB_ROWS][WOOTING_RGB_COLS];
+
+/** @brief Select RGB buffer for device
+
+This function swaps the RGB buffer pointer for the one of the selected device.
+It should NEVER be called from non SDK code.
+
+@returns
+This function returns true(1) after the swap
+*/
+bool wooting_rgb_select_buffer(uint8_t buffer_index);
+
 /** @brief Check if keyboard connected.
 
 This function offers a check if the keyboard is connected.

@@ -7,6 +7,16 @@
  */
 #include "wooting-rgb-sdk.h"
 
+/** @brief Builds the V1 buffers from a full matrix
+
+This function makes the SDK backwards compatible by building the V1 split
+buffers from the full RGB matrix of V2 devices.
+
+@returns
+Will return true(1) after building the buffers
+*/
+bool wooting_rgb_build_v1_buffers();
+
 #define NOLED 255
 #define LED_LEFT_SHIFT_ANSI 9
 #define LED_LEFT_SHIFT_ISO 7
@@ -22,12 +32,6 @@ static uint8_t rgb_buffer1[RGB_RAW_BUFFER_SIZE] = {0};
 static uint8_t rgb_buffer2[RGB_RAW_BUFFER_SIZE] = {0};
 static uint8_t rgb_buffer3[RGB_RAW_BUFFER_SIZE] = {0};
 static uint8_t rgb_buffer4[RGB_RAW_BUFFER_SIZE] = {0};
-
-static bool rgb_buffer0_changed = false;
-static bool rgb_buffer1_changed = false;
-static bool rgb_buffer2_changed = false;
-static bool rgb_buffer3_changed = false;
-static bool rgb_buffer4_changed = false;
 
 static uint8_t gammaFilter[256] = {
     0,   0,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,
@@ -49,8 +53,8 @@ static uint8_t gammaFilter[256] = {
     215, 218, 220, 223, 225, 228, 231, 233, 236, 239, 241, 244, 247, 249, 252,
     255};
 
-static uint16_t rgb_buffer_matrix[WOOTING_RGB_ROWS][WOOTING_RGB_COLS] = {0};
-static bool rgb_buffer_matrix_changed = false;
+static WOOTING_RGB_MATRIX rgb_buffer_matrix_array[WOOTING_MAX_RGB_DEVICES];
+static WOOTING_RGB_MATRIX *rgb_buffer_matrix;
 
 // Converts the array index to a memory location in the RGB buffers
 static uint8_t get_safe_led_idex(uint8_t row, uint8_t column) {
@@ -84,6 +88,13 @@ static inline uint16_t encodeColor(uint8_t red, uint8_t green, uint8_t blue) {
   encode |= (blue & 0xf8) >> 3;
 
   return encode;
+}
+
+static inline void decodeColor(uint16_t color, uint8_t *red, uint8_t *green,
+                               uint8_t *blue) {
+  *red = (color >> 8) & 0xf8;
+  *green = (color >> 3) & 0xfc;
+  *blue = (color << 3) & 0xf8;
 }
 
 bool wooting_rgb_kbd_connected() { return wooting_usb_find_keyboard(); }
@@ -189,48 +200,33 @@ bool wooting_rgb_array_update_keyboard() {
   }
 
   if (wooting_usb_use_v2_interface()) {
-    if (rgb_buffer_matrix_changed) {
-      if (!wooting_usb_send_buffer_v2(rgb_buffer_matrix)) {
-        return false;
-      }
-      rgb_buffer_matrix_changed = false;
+    if (!wooting_usb_send_buffer_v2(*rgb_buffer_matrix)) {
+      return false;
     }
   } else {
+    if (!wooting_rgb_build_v1_buffers())
+      return false;
 
-    if (rgb_buffer0_changed) {
-      if (!wooting_usb_send_buffer_v1(PART0, rgb_buffer0)) {
-        return false;
-      }
-      rgb_buffer0_changed = false;
+    if (!wooting_usb_send_buffer_v1(PART0, rgb_buffer0)) {
+      return false;
     }
 
-    if (rgb_buffer1_changed) {
-      if (!wooting_usb_send_buffer_v1(PART1, rgb_buffer1)) {
-        return false;
-      }
-      rgb_buffer1_changed = false;
+    if (!wooting_usb_send_buffer_v1(PART1, rgb_buffer1)) {
+      return false;
     }
 
-    if (rgb_buffer2_changed) {
-      if (!wooting_usb_send_buffer_v1(PART2, rgb_buffer2)) {
-        return false;
-      }
-      rgb_buffer2_changed = false;
+    if (!wooting_usb_send_buffer_v1(PART2, rgb_buffer2)) {
+      return false;
     }
 
-    if (rgb_buffer3_changed) {
-      if (!wooting_usb_send_buffer_v1(PART3, rgb_buffer3)) {
-        return false;
-      }
-      rgb_buffer3_changed = false;
+    if (!wooting_usb_send_buffer_v1(PART3, rgb_buffer3)) {
+      return false;
     }
 
-    if (rgb_buffer4_changed &&
-        wooting_usb_get_meta()->device_type == DEVICE_KEYBOARD) {
+    if (wooting_usb_get_meta()->device_type == DEVICE_KEYBOARD) {
       if (!wooting_usb_send_buffer_v1(PART4, rgb_buffer4)) {
         return false;
       }
-      rgb_buffer4_changed = false;
     }
   }
   return true;
@@ -239,66 +235,13 @@ bool wooting_rgb_array_update_keyboard() {
 static bool wooting_rgb_array_change_single(uint8_t row, uint8_t column,
                                             uint8_t red, uint8_t green,
                                             uint8_t blue) {
-  if (wooting_usb_use_v2_interface()) {
-    uint16_t prevValue = rgb_buffer_matrix[row][column];
-    uint16_t newValue = encodeColor(red, green, blue);
-    if (newValue != prevValue) {
-      rgb_buffer_matrix[row][column] = newValue;
-      rgb_buffer_matrix_changed = true;
-    }
-
-    return true;
-  } else {
-
-    const uint8_t pwm_mem_map[48] = {
-        0x0,  0x1,  0x2,  0x3,  0x4,  0x5,  0x8,  0x9,  0xa,  0xb,  0xc,  0xd,
-        0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d,
-        0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d,
-        0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d};
-
-    uint8_t led_index = get_safe_led_idex(row, column);
-    uint8_t *buffer_pointer;
-
-    // prevent assigning led's that don't exist
-    if (led_index > wooting_usb_get_meta()->led_index_max) {
-      return false;
-    }
-    if (led_index >= 96) {
-      buffer_pointer = rgb_buffer4;
-      rgb_buffer4_changed = true;
-    } else if (led_index >= 72) {
-      buffer_pointer = rgb_buffer3;
-      rgb_buffer3_changed = true;
-    } else if (led_index >= 48) {
-      buffer_pointer = rgb_buffer2;
-      rgb_buffer2_changed = true;
-    } else if (led_index >= 24) {
-      buffer_pointer = rgb_buffer1;
-      rgb_buffer1_changed = true;
-    } else {
-      buffer_pointer = rgb_buffer0;
-      rgb_buffer0_changed = true;
-    }
-
-    uint8_t buffer_index = pwm_mem_map[led_index % 24];
-    buffer_pointer[buffer_index] = gammaFilter[red];
-    buffer_pointer[buffer_index + 0x10] = gammaFilter[green];
-    buffer_pointer[buffer_index + 0x20] = gammaFilter[blue];
-
-    if (led_index == LED_ENTER_ANSI) {
-      uint8_t iso_enter_index = pwm_mem_map[LED_ENTER_ISO - 48];
-      rgb_buffer2[iso_enter_index] = rgb_buffer2[buffer_index];
-      rgb_buffer2[iso_enter_index + 0x10] = rgb_buffer2[buffer_index + 0x10];
-      rgb_buffer2[iso_enter_index + 0x20] = rgb_buffer2[buffer_index + 0x20];
-    } else if (led_index == LED_LEFT_SHIFT_ANSI) {
-      uint8_t iso_shift_index = pwm_mem_map[LED_LEFT_SHIFT_ISO];
-      rgb_buffer0[iso_shift_index] = rgb_buffer0[buffer_index];
-      rgb_buffer0[iso_shift_index + 0x10] = rgb_buffer0[buffer_index + 0x10];
-      rgb_buffer0[iso_shift_index + 0x20] = rgb_buffer0[buffer_index + 0x20];
-    }
-
-    return true;
+  uint16_t prevValue = (*rgb_buffer_matrix)[row][column];
+  uint16_t newValue = encodeColor(red, green, blue);
+  if (newValue != prevValue) {
+    (*rgb_buffer_matrix)[row][column] = newValue;
   }
+
+  return true;
 }
 
 bool wooting_rgb_array_set_single(uint8_t row, uint8_t column, uint8_t red,
@@ -349,6 +292,69 @@ bool wooting_rgb_array_set_full(const uint8_t *colors_buffer) {
   } else {
     return true;
   }
+}
+
+bool wooting_rgb_build_v1_buffers() {
+  const uint8_t pwm_mem_map[48] = {
+      0x0,  0x1,  0x2,  0x3,  0x4,  0x5,  0x8,  0x9,  0xa,  0xb,  0xc,  0xd,
+      0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d,
+      0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d,
+      0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d};
+
+  uint8_t *buffer_pointer;
+
+  for (int row = 0; row < WOOTING_RGB_ROWS; row++) {
+    for (int column = 0; column < WOOTING_RGB_COLS; column++) {
+      uint8_t led_index = get_safe_led_idex(row, column);
+
+      // prevent assigning led's that don't exist
+      if (led_index > wooting_usb_get_meta()->led_index_max) {
+        continue;
+      }
+      if (led_index >= 96) {
+        buffer_pointer = rgb_buffer4;
+      } else if (led_index >= 72) {
+        buffer_pointer = rgb_buffer3;
+      } else if (led_index >= 48) {
+        buffer_pointer = rgb_buffer2;
+      } else if (led_index >= 24) {
+        buffer_pointer = rgb_buffer1;
+      } else {
+        buffer_pointer = rgb_buffer0;
+      }
+
+      uint8_t buffer_index = pwm_mem_map[led_index % 24];
+      uint16_t key_colour = (*rgb_buffer_matrix)[row][column];
+
+      uint8_t red, green, blue;
+      decodeColor(key_colour, &red, &green, &blue);
+
+      buffer_pointer[buffer_index] = gammaFilter[red];
+      buffer_pointer[buffer_index + 0x10] = gammaFilter[green];
+      buffer_pointer[buffer_index + 0x20] = gammaFilter[blue];
+
+      if (led_index == LED_ENTER_ANSI) {
+        uint8_t iso_enter_index = pwm_mem_map[LED_ENTER_ISO - 48];
+        rgb_buffer2[iso_enter_index] = rgb_buffer2[buffer_index];
+        rgb_buffer2[iso_enter_index + 0x10] = rgb_buffer2[buffer_index + 0x10];
+        rgb_buffer2[iso_enter_index + 0x20] = rgb_buffer2[buffer_index + 0x20];
+      } else if (led_index == LED_LEFT_SHIFT_ANSI) {
+        uint8_t iso_shift_index = pwm_mem_map[LED_LEFT_SHIFT_ISO];
+        rgb_buffer0[iso_shift_index] = rgb_buffer0[buffer_index];
+        rgb_buffer0[iso_shift_index + 0x10] = rgb_buffer0[buffer_index + 0x10];
+        rgb_buffer0[iso_shift_index + 0x20] = rgb_buffer0[buffer_index + 0x20];
+      }
+    }
+  }
+
+  return true;
+}
+
+bool wooting_rgb_select_buffer(uint8_t buffer_index) {
+  // Fetch pointer and buffer data from arrays
+  rgb_buffer_matrix = &rgb_buffer_matrix_array[buffer_index];
+
+  return true;
 }
 
 const WOOTING_USB_META *wooting_rgb_device_info() {
