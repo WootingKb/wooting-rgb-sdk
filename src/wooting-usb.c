@@ -6,7 +6,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 #include "wooting-usb.h"
-#include "wooting-rgb-sdk.h"
 #include "hidapi.h"
 #include "stdlib.h"
 #include "string.h"
@@ -150,6 +149,7 @@ static void set_meta_wooting_two_he_arm(WOOTING_USB_META *device_meta) {
   device_meta->max_columns = WOOTING_TWO_RGB_COLS;
   device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
   device_meta->v2_interface = true;
+  device_meta->uses_small_packets = true;
 }
 
 static void set_meta_wooting_60he(WOOTING_USB_META *device_meta) {
