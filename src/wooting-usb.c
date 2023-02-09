@@ -6,16 +6,20 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 #include "wooting-usb.h"
-#include "wooting-rgb-sdk.h"
 #include "hidapi.h"
 #include "stdlib.h"
 #include "string.h"
+#include "wooting-rgb-sdk.h"
 
 #define WOOTING_COMMAND_SIZE 8
 #define WOOTING_REPORT_SIZE 128 + 1
 #define WOOTING_V2_REPORT_SIZE 256 + 1
+#define WOOTING_SMALL_PACKET_SIZE 64
+#define WOOTING_SMALL_PACKET_COUNT 4
 #define WOOTING_V1_RESPONSE_SIZE 128
 #define WOOTING_V2_RESPONSE_SIZE 256
+
+#define WOOTING_READ_RESPONSE_TIMEOUT 1000
 
 #define WOOTING_VID 0x03EB
 #define WOOTING_VID2 0x31e3
@@ -34,6 +38,7 @@
 #define WOOTING_TWO_LE_PID 0x1210
 
 #define WOOTING_TWO_HE_PID 0x1220
+#define WOOTING_TWO_HE_ARM_PID 0x1230
 #define WOOTING_60HE_PID 0x1300
 #define WOOTING_60HE_ARM_PID 0x1310
 
@@ -84,6 +89,7 @@ static void reset_meta(WOOTING_USB_META *device_meta) {
   device_meta->led_index_max = 0;
   device_meta->v2_interface = false;
   device_meta->layout = LAYOUT_UNKNOWN;
+  device_meta->uses_small_packets = false;
 }
 
 static void set_meta_wooting_one(WOOTING_USB_META *device_meta) {
@@ -93,6 +99,7 @@ static void set_meta_wooting_one(WOOTING_USB_META *device_meta) {
   device_meta->max_columns = WOOTING_ONE_RGB_COLS;
   device_meta->led_index_max = WOOTING_ONE_KEY_CODE_LIMIT;
   device_meta->v2_interface = false;
+  device_meta->uses_small_packets = false;
 }
 
 static void set_meta_wooting_one_v2(WOOTING_USB_META *device_meta) {
@@ -107,6 +114,7 @@ static void set_meta_wooting_two(WOOTING_USB_META *device_meta) {
   device_meta->max_columns = WOOTING_TWO_RGB_COLS;
   device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
   device_meta->v2_interface = false;
+  device_meta->uses_small_packets = false;
 }
 
 static void set_meta_wooting_two_v2(WOOTING_USB_META *device_meta) {
@@ -121,6 +129,7 @@ static void set_meta_wooting_two_le(WOOTING_USB_META *device_meta) {
   device_meta->max_columns = WOOTING_TWO_RGB_COLS;
   device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
   device_meta->v2_interface = true;
+  device_meta->uses_small_packets = false;
 }
 
 static void set_meta_wooting_two_he(WOOTING_USB_META *device_meta) {
@@ -130,6 +139,17 @@ static void set_meta_wooting_two_he(WOOTING_USB_META *device_meta) {
   device_meta->max_columns = WOOTING_TWO_RGB_COLS;
   device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
   device_meta->v2_interface = true;
+  device_meta->uses_small_packets = false;
+}
+
+static void set_meta_wooting_two_he_arm(WOOTING_USB_META *device_meta) {
+  device_meta->model = "Wooting Two HE (ARM)";
+  device_meta->device_type = DEVICE_KEYBOARD;
+  device_meta->max_rows = WOOTING_RGB_ROWS;
+  device_meta->max_columns = WOOTING_TWO_RGB_COLS;
+  device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
+  device_meta->v2_interface = true;
+  device_meta->uses_small_packets = true;
 }
 
 static void set_meta_wooting_60he(WOOTING_USB_META *device_meta) {
@@ -139,6 +159,7 @@ static void set_meta_wooting_60he(WOOTING_USB_META *device_meta) {
   device_meta->max_columns = 14;
   device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
   device_meta->v2_interface = true;
+  device_meta->uses_small_packets = false;
 }
 
 static void set_meta_wooting_60he_arm(WOOTING_USB_META *device_meta) {
@@ -148,6 +169,7 @@ static void set_meta_wooting_60he_arm(WOOTING_USB_META *device_meta) {
   device_meta->max_columns = 14;
   device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
   device_meta->v2_interface = true;
+  device_meta->uses_small_packets = true;
 }
 
 WOOTING_USB_META *wooting_usb_get_meta() {
@@ -297,6 +319,12 @@ bool wooting_usb_find_keyboard() {
     printf("Enumerate on Wooting Two HE Successful\n");
 #endif
     walk_hid_devices(hid_info, set_meta_wooting_two_he);
+  }
+  if (PID_ALT_CHECK(WOOTING_TWO_HE_ARM_PID)) {
+#ifdef DEBUG_LOG
+    printf("Enumerate on Wooting Two HE Successful\n");
+#endif
+    walk_hid_devices(hid_info, set_meta_wooting_two_he_arm);
   }
   if (PID_ALT_CHECK(WOOTING_60HE_PID)) {
 #ifdef DEBUG_LOG
@@ -501,20 +529,47 @@ bool wooting_usb_send_buffer_v2(
   memcpy(&report_buffer[4], rgb_buffer,
          WOOTING_RGB_ROWS * WOOTING_RGB_COLS * sizeof(uint16_t));
 
-  int report_size =
-      hid_write(keyboard_handle, report_buffer, WOOTING_V2_REPORT_SIZE);
-  if (report_size == WOOTING_V2_REPORT_SIZE) {
+  if (wooting_usb_get_meta()->uses_small_packets) {
 #ifdef DEBUG_LOG
-    printf("Successfully sent V2 buffer...\n");
+    printf("Sending v2 buffer using small packets\n");
 #endif
+    for (uint8_t i = 0; i < WOOTING_SMALL_PACKET_COUNT; i++) {
+      // We have +1 on the packet size for both the buff and what we send as we
+      // need to have the report index at the start
+      uint8_t child_buff[WOOTING_SMALL_PACKET_SIZE + 1] = {0};
+      memcpy(&child_buff[1],
+             &report_buffer[(i * WOOTING_SMALL_PACKET_SIZE) + 1],
+             WOOTING_SMALL_PACKET_SIZE);
+      int child_report =
+          hid_write(keyboard_handle, child_buff, WOOTING_SMALL_PACKET_SIZE + 1);
+
+      if (child_report != WOOTING_SMALL_PACKET_SIZE + 1) {
+#ifdef DEBUG_LOG
+        printf("Got report size from small buffer no %d: %d, expected: %d, "
+               "disconnecting..\n",
+               i, child_report, WOOTING_SMALL_PACKET_SIZE + 1);
+#endif
+        wooting_usb_disconnect(true);
+        return false;
+      }
+    }
     return true;
   } else {
+    int report_size =
+        hid_write(keyboard_handle, report_buffer, WOOTING_V2_REPORT_SIZE);
+    if (report_size == WOOTING_V2_REPORT_SIZE) {
 #ifdef DEBUG_LOG
-    printf("Got report size: %d, expected: %d, disconnecting..\n", report_size,
-           WOOTING_V2_REPORT_SIZE);
+      printf("Successfully sent V2 buffer...\n");
 #endif
-    wooting_usb_disconnect(true);
-    return false;
+      return true;
+    } else {
+#ifdef DEBUG_LOG
+      printf("Got report size: %d, expected: %d, disconnecting..\n",
+             report_size, WOOTING_V2_REPORT_SIZE);
+#endif
+      wooting_usb_disconnect(true);
+      return false;
+    }
   }
 }
 
@@ -559,9 +614,14 @@ bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0,
       commandId, parameter0, parameter1, parameter2, parameter3);
   size_t response_size = wooting_usb_get_response_size();
 
+#ifdef DEBUG_LOG
+  printf("Feature sent, Reading response\n");
+#endif
+
   // Just read the response and discard it
   uint8_t *buff = (uint8_t *)calloc(response_size, sizeof(uint8_t));
-  int result = wooting_usb_read_response(buff, response_size);
+  int result = wooting_usb_read_response_timeout(buff, response_size,
+                                                 WOOTING_READ_RESPONSE_TIMEOUT);
   free(buff);
 #ifdef DEBUG_LOG
   printf("Read result %d \n", result);
@@ -571,8 +631,10 @@ bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0,
     return true;
   } else {
 #ifdef DEBUG_LOG
-    printf("Got command size: %d, expected: %d, disconnecting..\n",
-           command_size, WOOTING_COMMAND_SIZE);
+    printf(
+        "Got command size: %d, expected: %d, Got reponse size: %d, expected: "
+        "%d, disconnecting..\n",
+        command_size, WOOTING_COMMAND_SIZE, result, (int)response_size);
 #endif
 
     wooting_usb_disconnect(true);
@@ -597,7 +659,8 @@ int wooting_usb_send_feature_with_response(
     size_t response_size = wooting_usb_get_response_size();
     uint8_t *responseBuff = (uint8_t *)calloc(response_size, sizeof(uint8_t));
 
-    int result = wooting_usb_read_response(responseBuff, response_size);
+    int result = wooting_usb_read_response_timeout(
+        responseBuff, response_size, WOOTING_READ_RESPONSE_TIMEOUT);
 
     if (result == response_size) {
       memcpy(buff, responseBuff, len);
@@ -637,9 +700,24 @@ static void debug_print_buffer(uint8_t *buff, size_t len) {
 int wooting_usb_read_response_timeout(uint8_t *buff, size_t len,
                                       int milliseconds) {
   int result = hid_read_timeout(keyboard_handle, buff, len, milliseconds);
+  if (result <= 0) {
+#ifdef DEBUG_LOG
+    printf("hid_read_timeout %d error on first read\n", result);
+#endif
+    return result;
+  }
+
   while (result < len) {
-    result += hid_read_timeout(keyboard_handle, buff + result, len - result,
-                               milliseconds);
+    int r = hid_read_timeout(keyboard_handle, buff + result, len - result,
+                             milliseconds);
+    if (r <= 0) {
+#ifdef DEBUG_LOG
+      printf("hid_read_timeout %d error while reading slice %d\n", r, result);
+#endif
+      return r;
+    } else {
+      result += r;
+    }
   }
 #ifdef DEBUG_LOG
   printf("hid_read_timeout result code: %d\n", result);
@@ -649,13 +727,5 @@ int wooting_usb_read_response_timeout(uint8_t *buff, size_t len,
 }
 
 int wooting_usb_read_response(uint8_t *buff, size_t len) {
-  int result = hid_read(keyboard_handle, buff, len);
-  while (result < len) {
-    result += hid_read(keyboard_handle, buff + result, len - result);
-  }
-#ifdef DEBUG_LOG
-  printf("hid_read result code: %d\n", result);
-#endif
-  debug_print_buffer(buff, len);
-  return result;
+  return wooting_usb_read_response_timeout(buff, len, -1);
 }

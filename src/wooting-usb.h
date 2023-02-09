@@ -57,6 +57,7 @@ typedef struct WOOTING_USB_META {
   WOOTING_DEVICE_TYPE device_type;
   bool v2_interface;
   WOOTING_DEVICE_LAYOUT layout;
+  bool uses_small_packets;
 } WOOTING_USB_META;
 
 typedef struct _KeyboardMatrixID {
