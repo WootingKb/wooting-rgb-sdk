@@ -13,7 +13,7 @@ LIBS =  `pkg-config hidapi-hidraw --libs`
 INCLUDES ?= `pkg-config hidapi-hidraw --cflags` -I../src 
 
 libwooting-rgb-sdk.so: $(OBJS)
-	$(CC) $(LDFLAGS) $(LIBS) -shared -fPIC -Wl,-soname,$0.0 $^ -o $@
+	$(CC) $(LDFLAGS) $(LIBS) -shared -fPIC -Wl,-soname,$@.0 $^ -o $@
 
 $(OBJS): %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(INCLUDES) $< -o $@
@@ -23,6 +23,7 @@ clean:
 
 install: libwooting-rgb-sdk.so
 	install -Dm755 libwooting-rgb-sdk.so $(prefix)/lib/libwooting-rgb-sdk.so
+	ln -srf $(prefix)/lib/libwooting-rgb-sdk.so $(prefix)/lib/libwooting-rgb-sdk.so.0
 	install -Dm644 libwooting-rgb-sdk.pc $(prefix)/lib/pkgconfig/libwooting-rgb-sdk.pc
 	install -Dm644 ../src/wooting-rgb-sdk.h $(prefix)/include/wooting-rgb-sdk.h
 	install -Dm644 ../src/wooting-usb.h $(prefix)/include/wooting-usb.h
