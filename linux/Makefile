@@ -15,13 +15,16 @@ INCLUDES ?= `pkg-config hidapi-hidraw --cflags` -I../src
 libwooting-rgb-sdk.so: $(OBJS)
 	$(CC) $(LDFLAGS) $(LIBS) -shared -fPIC -Wl,-soname,$@.0 $^ -o $@
 
+libwooting-rgb-sdk.pc: libwooting-rgb-sdk.pc.in
+	sed -e "s%^prefix=.*%prefix=$(prefix)%" libwooting-rgb-sdk.pc.in > libwooting-rgb-sdk.pc
+
 $(OBJS): %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(INCLUDES) $< -o $@
 
 clean:
-	rm -f $(OBJS)
+	rm -f $(OBJS) libwooting-rgb-sdk.pc libwooting-rgb-sdk.so
 
-install: libwooting-rgb-sdk.so
+install: libwooting-rgb-sdk.so libwooting-rgb-sdk.pc
 	install -Dm755 libwooting-rgb-sdk.so $(prefix)/lib/libwooting-rgb-sdk.so
 	ln -srf $(prefix)/lib/libwooting-rgb-sdk.so $(prefix)/lib/libwooting-rgb-sdk.so.0
 	install -Dm644 libwooting-rgb-sdk.pc $(prefix)/lib/pkgconfig/libwooting-rgb-sdk.pc
