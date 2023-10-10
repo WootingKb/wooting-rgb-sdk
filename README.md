@@ -104,14 +104,13 @@ Keyboard matrix with rows and columns:
 
 ![Wooting UwU RGB Matrix](resources/uwu-matrix.png)
 
-- *Green Boxes*: Lightbar LEDs
-- *Yellow Boxes*: Analog Keys + LED
-- *Blue Boxes*: Digital Buttons
+- **Green Boxes**: Lightbar LEDs
+- **Yellow Boxes**: Analog Keys + LED
+- **Blue Boxes**: Digital Buttons
 
-The UwU isn't able to have an ideal matrix representation, it is not ideal when it comes to how it relates to the physical layout. So it is recommended to use proxy representations that are more relevant to what you want to visualise and transpose that onto the UwU matrix. 
+The UwU isn't able to have an ideal matrix representation, it is not ideal when it comes to how it relates to the physical layout. So it is recommended to use proxy representations that are more relevant to what you want to visualise and transpose that onto the UwU matrix.
 
 e.g. If you want to light up a single lightbar LED and move it around the lightbar, then you may want to make an array representation of the lightbar [(0,0), (0,2), (0,4), (0,6), (1,6), ... (1,0)] and apply your logic around that, then transform onto the 2D matrix.
-
 
 ## License
 
