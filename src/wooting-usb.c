@@ -41,6 +41,8 @@
 #define WOOTING_TWO_HE_ARM_PID 0x1230
 #define WOOTING_60HE_PID 0x1300
 #define WOOTING_60HE_ARM_PID 0x1310
+#define WOOTING_UWU_PID 0x1500
+#define WOOTING_UWU_RGB_PID 0x1510
 
 #define CFG_USAGE_PAGE 0x1337
 
@@ -170,6 +172,22 @@ static void set_meta_wooting_60he_arm(WOOTING_USB_META *device_meta) {
   device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
   device_meta->v2_interface = true;
   device_meta->uses_small_packets = true;
+}
+
+static void set_meta_wooting_uwu_rgb(WOOTING_USB_META *device_meta) {
+  device_meta->model = "Wooting UwU RGB";
+  device_meta->device_type = DEVICE_KEYPAD_3KEY;
+  device_meta->max_rows = 5;
+  device_meta->max_columns = 7;
+  device_meta->led_index_max = 18;
+  device_meta->v2_interface = true;
+  device_meta->uses_small_packets = true;
+}
+
+static void set_meta_wooting_uwu(WOOTING_USB_META *device_meta) {
+  set_meta_wooting_uwu_rgb(device_meta);
+  device_meta->model = "Wooting UwU";
+  device_meta->led_index_max = 0;
 }
 
 WOOTING_USB_META *wooting_usb_get_meta() {
@@ -336,6 +354,20 @@ bool wooting_usb_find_keyboard() {
     printf("Enumerate on Wooting 60HE (ARM) Successful\n");
 #endif
     walk_hid_devices(hid_info, set_meta_wooting_60he_arm);
+  }
+
+  if (PID_ALT_CHECK(WOOTING_UWU_PID)) {
+#ifdef DEBUG_LOG
+    printf("Enumerate on Wooting UwU Successful\n");
+#endif
+    walk_hid_devices(hid_info, set_meta_wooting_uwu);
+  }
+
+  if (PID_ALT_CHECK(WOOTING_UWU_RGB_PID)) {
+#ifdef DEBUG_LOG
+    printf("Enumerate on Wooting UwU RGB Successful\n");
+#endif
+    walk_hid_devices(hid_info, set_meta_wooting_uwu_rgb);
   }
 
   enumerating = false;
