@@ -1,4 +1,4 @@
-all: libwooting-rgb-sdk.so
+all: libwooting-rgb-sdk.so libwooting-rgb-sdk.pc
 
 prefix ?= /usr/local
 
@@ -17,6 +17,8 @@ libwooting-rgb-sdk.so: $(OBJS)
 
 libwooting-rgb-sdk.pc: libwooting-rgb-sdk.pc.in
 	sed -e "s%^prefix=.*%prefix=$(prefix)%" libwooting-rgb-sdk.pc.in > libwooting-rgb-sdk.pc
+
+pc: libwooting-rgb-sdk.pc
 
 $(OBJS): %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(INCLUDES) $< -o $@
