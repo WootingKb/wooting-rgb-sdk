@@ -108,12 +108,19 @@ bool wooting_rgb_reset_rgb() {
 }
 
 bool wooting_rgb_close() {
-  if (wooting_rgb_reset_rgb()) {
-    wooting_usb_disconnect(false);
-    return true;
-  } else {
-    return false;
+  bool result = false;
+
+  for (uint8_t i = 0; i < wooting_usb_device_count(); i++) {
+    if (wooting_usb_select_device(i)) {
+      result |= wooting_rgb_reset_rgb();
+    }
   }
+
+  // The disconnect call disconnects all devices, so we do it after we've
+  // attempted to reset rgb on all of them
+  wooting_usb_disconnect(false);
+
+  return result;
 }
 
 bool wooting_rgb_reset() { return wooting_rgb_close(); }
