@@ -78,7 +78,7 @@ static uint16_t getCrc16ccitt(const uint8_t *buffer, uint16_t size) {
   return crc;
 }
 
-typedef void (*set_meta_func)();
+typedef void (*set_meta_func)(WOOTING_USB_META *device_meta);
 void walk_hid_devices(struct hid_device_info *hid_info_walker,
                       set_meta_func meta_func);
 
