@@ -44,6 +44,7 @@
 #define WOOTING_60HE_PLUS_PID 0x1320
 #define WOOTING_UWU_PID 0x1500
 #define WOOTING_UWU_RGB_PID 0x1510
+#define WOOTING_80HE_PID 0x1400
 
 #define CFG_USAGE_PAGE 0x1337
 
@@ -199,6 +200,17 @@ static void set_meta_wooting_uwu(WOOTING_USB_META *device_meta) {
   set_meta_wooting_uwu_rgb(device_meta);
   device_meta->model = "Wooting UwU";
   device_meta->led_index_max = 0;
+}
+
+static void set_meta_wooting_80he(WOOTING_USB_META *device_meta) {
+  device_meta->model = "Wooting 80HE";
+  // TODO: Should we have a separate device type for this?
+  device_meta->device_type = DEVICE_KEYBOARD_TKL;
+  device_meta->max_rows = WOOTING_RGB_ROWS;
+  device_meta->max_columns = 17;
+  device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
+  device_meta->v2_interface = true;
+  device_meta->uses_small_packets = false;
 }
 
 WOOTING_USB_META *wooting_usb_get_meta() {
@@ -386,6 +398,13 @@ bool wooting_usb_find_keyboard() {
     printf("Enumerate on Wooting UwU RGB Successful\n");
 #endif
     walk_hid_devices(hid_info, set_meta_wooting_uwu_rgb);
+  }
+
+  if (PID_ALT_CHECK(WOOTING_80HE_PID)) {
+#ifdef DEBUG_LOG
+    printf("Enumerate on Wooting 80HE Successful\n");
+#endif
+    walk_hid_devices(hid_info, set_meta_wooting_80he);
   }
 
   enumerating = false;
