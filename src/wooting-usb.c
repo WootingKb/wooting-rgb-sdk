@@ -204,8 +204,7 @@ static void set_meta_wooting_uwu(WOOTING_USB_META *device_meta) {
 
 static void set_meta_wooting_80he(WOOTING_USB_META *device_meta) {
   device_meta->model = "Wooting 80HE";
-  // TODO: Should we have a separate device type for this?
-  device_meta->device_type = DEVICE_KEYBOARD_TKL;
+  device_meta->device_type = DEVICE_KEYBOARD_80;
   device_meta->max_rows = WOOTING_RGB_ROWS;
   device_meta->max_columns = 17;
   device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
