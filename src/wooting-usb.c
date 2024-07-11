@@ -78,7 +78,7 @@ static uint16_t getCrc16ccitt(const uint8_t *buffer, uint16_t size) {
   return crc;
 }
 
-typedef void (*set_meta_func)();
+typedef void (*set_meta_func)(WOOTING_USB_META *device_meta);
 void walk_hid_devices(struct hid_device_info *hid_info_walker,
                       set_meta_func meta_func);
 
@@ -432,6 +432,54 @@ void walk_hid_devices(struct hid_device_info *hid_info_walker,
         keyboard_handle_array[connected_keyboards] = keyboard_handle;
         meta_func(&wooting_usb_meta_array[connected_keyboards]);
         (&wooting_usb_meta_array[connected_keyboards])->connected = true;
+
+        unsigned char buff[HID_API_MAX_REPORT_DESCRIPTOR_SIZE];
+
+        int len = hid_get_report_descriptor(keyboard_handle, buff,
+                                            HID_API_MAX_REPORT_DESCRIPTOR_SIZE);
+        if (len > 0) {
+#ifdef DEBUG_LOG
+          printf("Got descriptor with len %d\n", len);
+#endif
+          for (int i = 0; i < len; i++) {
+            // For this check, we can be a bit basic knowing the descriptors of
+            // the Wooting devices. In the cases where it's using small packets,
+            // we'll see the 0x95 byte, indicating the Report size, but with
+            // only one byte parameter (i.e. 64). For big packet, it's 256, and
+            // that has to be represented in two bytes, which means we use 0x96
+            // as the byte to indicate the report size declaration. So a more
+            // general purpose implementation would read what the value is after
+            // the Report Size (0x95/6) byte, but it's a bit unnecessary for us
+            // to do that when we know the descriptors.
+            if (buff[i] == 0x95) {
+
+              (&wooting_usb_meta_array[connected_keyboards])
+                  ->uses_small_packets = true;
+#ifdef DEBUG_LOG
+              printf("Determined that device needs small packets from the HID "
+                     "report descriptor\n");
+#endif
+              break;
+            } else if (buff[i] == 0x96) {
+
+              (&wooting_usb_meta_array[connected_keyboards])
+                  ->uses_small_packets = false;
+#ifdef DEBUG_LOG
+              printf("Determined that device needs big packets from the HID "
+                     "report descriptor\n");
+#endif
+              break;
+            }
+          }
+        } else {
+#ifdef DEBUG_LOG
+          printf("Failed to get report descriptor (%d) Using default packet "
+                 "size (small = %d)\n",
+                 len,
+                 (&wooting_usb_meta_array[connected_keyboards])
+                     ->uses_small_packets);
+#endif
+        }
 
         // Any feature sends need to be done after the meta is set so the
         // correct value for v2_interface is set
