@@ -632,14 +632,10 @@ bool wooting_usb_send_buffer_v2(
     printf("Sending v2 buffer using small packets\n");
 #endif
     for (uint8_t i = 0; i < WOOTING_SMALL_PACKET_COUNT; i++) {
-      // We have +1 on the packet size for both the buff and what we send as we
-      // need to have the report index at the start
-      uint8_t child_buff[WOOTING_SMALL_PACKET_SIZE + 1] = {0};
-      memcpy(&child_buff[1],
-             &report_buffer[(i * WOOTING_SMALL_PACKET_SIZE) + 1],
-             WOOTING_SMALL_PACKET_SIZE);
+      // Each of the chunks needs to start with HID report index 0.
+      report_buffer[i * WOOTING_SMALL_PACKET_SIZE] = 0;
       int child_report =
-          hid_write(keyboard_handle, child_buff, WOOTING_SMALL_PACKET_SIZE + 1);
+          hid_write(keyboard_handle, &report_buffer[i * WOOTING_SMALL_PACKET_SIZE], WOOTING_SMALL_PACKET_SIZE + 1);
 
       if (child_report != WOOTING_SMALL_PACKET_SIZE + 1) {
 #ifdef DEBUG_LOG
