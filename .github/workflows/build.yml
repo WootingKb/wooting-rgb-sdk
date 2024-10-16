@@ -54,7 +54,7 @@ jobs:
         run: cd mac && make CDEFS="-Werror"
 
       - name: Build (Windows)
-        if: startsWith(matrix.os, 'windows')
+        if: startsWith(matrix.os, 'win')
         working-directory: ${{env.GITHUB_WORKSPACE}}
         # Add additional options to the MSBuild command line here (like platform or verbosity level).
         # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
@@ -94,7 +94,7 @@ jobs:
           cp mac/*.dylib dist/
 
       - name: Copy dist files (Windows)
-        if: startsWith(github.ref, 'refs/tags/v') && startsWith(matrix.os, 'windows')
+        if: startsWith(github.ref, 'refs/tags/v') && startsWith(matrix.os, 'win')
         shell: bash
         run: |
           # Copy Windows x64 files
@@ -108,7 +108,7 @@ jobs:
           cp windows/${{env.BUILD_CONFIGURATION}}/wooting-rgb-sdk.pdb dist/ || true
 
       - name: Sign dlls (Windows)
-        if: startsWith(github.ref, 'refs/tags/v') && startsWith(matrix.os, 'windows')
+        if: startsWith(github.ref, 'refs/tags/v') && startsWith(matrix.os, 'win')
         shell: bash
         env:
           TIMESTAMP: ${{secrets.WIN_EV_CSC_TIMESTAMP}}
