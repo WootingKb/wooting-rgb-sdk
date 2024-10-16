@@ -110,7 +110,6 @@ jobs:
 
       - name: Sign dlls (Windows)
         if: startsWith(github.ref, 'refs/tags/v') && startsWith(matrix.os, 'win')
-        shell: bash
         env:
           TIMESTAMP: ${{secrets.WIN_EV_CSC_TIMESTAMP}}
           CERT_FILE: ${{secrets.WIN_EV_CSC_CERT_FILE}}
@@ -119,8 +118,8 @@ jobs:
           PASS: ${{secrets.WIN_EV_CSC_PASS}}
           CONTAINER: ${{secrets.WIN_EV_CSC_CONTAINER}}
         run: |
-          signtool.exe sign /fd SHA256 /td sha256 /tr ${TIMESTAMP}?td=sha256 /f $CERT_FILE /csp "$CRYPT_PROVIDER" /kc "[${READER}{{${PASS}}}]=${CONTAINER}" "dist/wooting-rgb-sdk${{matrix.target == 'x64' && '64' || ''}}.dll"
-          signtool.exe verify /pa "dist/wooting-rgb-sdk${{matrix.target == 'x64' && '64' || ''}}.dll"
+          signtool.exe sign /fd sha256 /td sha256 /tr ${Env:TIMESTAMP}?td=sha256 /f $Env:CERT_FILE /csp "$Env:CRYPT_PROVIDER" /kc "[${Env:READER}{{${Env:PASS}}}]=${Env:CONTAINER}" "dist\wooting-rgb-sdk${{matrix.target == 'x64' && '64' || ''}}.dll"
+          signtool.exe verify /pa "dist\wooting-rgb-sdk${{matrix.target == 'x64' && '64' || ''}}.dll"
 
       - name: Zip files
         if: startsWith(github.ref, 'refs/tags/v')
