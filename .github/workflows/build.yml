@@ -119,7 +119,7 @@ jobs:
           PASS: ${{secrets.WIN_EV_CSC_PASS}}
           CONTAINER: ${{secrets.WIN_EV_CSC_CONTAINER}}
         run: |
-          signtool.exe sign /fd sha256 /td sha256 /tr ${TIMESTAMP}?td=sha256 /f $CERT_FILE /csp "$CRYPT_PROVIDER" /kc "[${READER}{{${PASS}}}]=${CONTAINER}" "dist/wooting-rgb-sdk${{matrix.target == 'x64' && '64' || ''}}.dll"
+          signtool.exe sign /fd SHA256 /td sha256 /tr ${TIMESTAMP}?td=sha256 /f $CERT_FILE /csp "$CRYPT_PROVIDER" /kc "[${READER}{{${PASS}}}]=${CONTAINER}" "dist/wooting-rgb-sdk${{matrix.target == 'x64' && '64' || ''}}.dll"
           signtool.exe verify /pa "dist/wooting-rgb-sdk${{matrix.target == 'x64' && '64' || ''}}.dll"
 
       - name: Zip files
