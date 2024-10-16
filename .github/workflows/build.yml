@@ -35,8 +35,9 @@ jobs:
         with:
           submodules: true
 
+      # This is set specifically to windows prefix so it only runs on the GH Actions runner and not our own
       - name: Add MSBuild to PATH (Windows)
-        if: startsWith(matrix.os, 'win')
+        if: startsWith(matrix.os, 'windows')
         uses: microsoft/setup-msbuild@v1.1
 
       - name: Install dependencies
