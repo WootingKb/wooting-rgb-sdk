@@ -43,6 +43,9 @@ typedef enum WOOTING_DEVICE_TYPE {
 
   // 3 key keypad, E.g. Wooting UwU
   DEVICE_KEYPAD_3KEY = 4,
+
+  // 80 percent keyboard, E.g. Wooting 80HE
+  DEVICE_KEYBOARD_80 = 5,
 } WOOTING_DEVICE_TYPE;
 
 typedef enum WOOTING_DEVICE_LAYOUT {
