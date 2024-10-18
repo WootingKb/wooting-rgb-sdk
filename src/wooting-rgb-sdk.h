@@ -102,7 +102,7 @@ functions if you want to change the entire keyboard.
 
 @ingroup API
 @param row The horizontal index of the key
-@param coloum The vertical index of the key
+@param column The vertical index of the key
 @param red 0-255 value of the red color
 @param green 0-255 value of the green color
 @param blue 0-255 value of the blue color
@@ -124,7 +124,7 @@ functions if you want to change the entire keyboard.
 
 @ingroup API
 @param row The horizontal index of the key
-@param coloum The vertical index of the key
+@param column The vertical index of the key
 
 @returns
 This functions return true (1) if the colour is reset.
@@ -169,7 +169,7 @@ can avoid dealing with C arrays from different languages.
 
 @ingroup API
 @param row The horizontal index of the key
-@param coloum The vertical index of the key
+@param column The vertical index of the key
 @param red 0-255 value of the red color
 @param green 0-255 value of the green color
 @param blue 0-255 value of the blue color
