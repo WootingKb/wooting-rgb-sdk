@@ -11,6 +11,12 @@
 #include "string.h"
 #include "wooting-rgb-sdk.h"
 
+#ifdef DEBUG_LOG
+#define DEBUG_PRINT(...) printf(__VA_ARGS__)
+#else
+#define DEBUG_PRINT(...) (void)0
+#endif
+
 #define WOOTING_COMMAND_SIZE 8
 #define WOOTING_REPORT_SIZE 128 + 1
 #define WOOTING_V2_REPORT_SIZE 256 + 1
@@ -227,9 +233,7 @@ bool wooting_usb_use_v2_interface(void) {
 }
 
 void wooting_usb_disconnect(bool trigger_cb) {
-#ifdef DEBUG_LOG
-  printf("Keyboard disconnected\n");
-#endif
+  DEBUG_PRINT("Keyboard disconnected\n");
   for (uint8_t i = 0; i < connected_keyboards; i++) {
     reset_meta(&wooting_usb_meta_array[i]);
     if (keyboard_handle_array[i]) {
@@ -254,17 +258,15 @@ WOOTING_DEVICE_LAYOUT wooting_usb_get_layout() {
   if (result != -1) {
     uint8_t index = wooting_usb_use_v2_interface() ? 10 : 9;
     uint8_t layout = buff[index];
-#ifdef DEBUG_LOG
-    printf("Layout result: %d, %d\n", layout, index);
-#endif
-    if (layout <= LAYOUT_ISO)
-      return (WOOTING_DEVICE_LAYOUT)layout;
+    DEBUG_PRINT("Layout result: %d, %d\n", layout, index);
+    if (layout <= LAYOUT_MAX)
+      return layout;
     else {
-      printf("Unknown device layout found %d\n", layout);
+      DEBUG_PRINT("Unknown device layout found %d\n", layout);
       return LAYOUT_UNKNOWN;
     }
   } else {
-    printf(
+    DEBUG_PRINT(
         "Failed to get device config info for layout detection, result: %d\n",
         result);
   }
@@ -274,21 +276,15 @@ WOOTING_DEVICE_LAYOUT wooting_usb_get_layout() {
 
 bool wooting_usb_find_keyboard() {
   if (keyboard_handle || connected_keyboards > 0) {
-    // #ifdef DEBUG_LOG
-    // printf("Got keyboard handle already\n");
-    // #endif
+    // DEBUG_PRINT("Got keyboard handle already\n");
     // If keyboard is disconnected read will return -1
     // https://github.com/signal11/hidapi/issues/55#issuecomment-5307209
     // unsigned char stub = 0;
     // if (hid_read_timeout(keyboard_handle, &stub, 0, 0) != -1) {
-    // 	#ifdef DEBUG_LOG
-    // 	printf("Keyboard succeeded test read\n");
-    // 	#endif
+    // 	DEBUG_PRINT("Keyboard succeeded test read\n");
     // 	return true;
     // } else {
-    // 	#ifdef DEBUG_LOG
-    // 	printf("Keyboard failed test read, disconnecting...\n");
-    // 	#endif
+    // 	DEBUG_PRINT("Keyboard failed test read, disconnecting...\n");
     // 	wooting_usb_disconnect(true);
     // }
 
@@ -297,9 +293,7 @@ bool wooting_usb_find_keyboard() {
       wooting_usb_select_device(0);
     return true;
   } else {
-#ifdef DEBUG_LOG
-    printf("No keyboard handle already\n");
-#endif
+    DEBUG_PRINT("No keyboard handle already\n");
   }
 
   // Initilize arrays to default values and allocate memory
@@ -325,102 +319,72 @@ bool wooting_usb_find_keyboard() {
           NULL
 
   if ((hid_info = hid_enumerate(WOOTING_VID, WOOTING_ONE_PID)) != NULL) {
-#ifdef DEBUG_LOG
-    printf("Enumerate on Wooting One Successful\n");
-#endif
+    DEBUG_PRINT("Enumerate on Wooting One Successful\n");
     walk_hid_devices(hid_info, set_meta_wooting_one);
   }
   if (PID_ALT_CHECK(WOOTING_ONE_V2_PID)) {
-#ifdef DEBUG_LOG
-    printf("Enumerate on Wooting One (V2) Successful\n");
-#endif
+    DEBUG_PRINT("Enumerate on Wooting One (V2) Successful\n");
     walk_hid_devices(hid_info, set_meta_wooting_one_v2);
   }
   if ((hid_info = hid_enumerate(WOOTING_VID, WOOTING_TWO_PID)) != NULL) {
-#ifdef DEBUG_LOG
-    printf("Enumerate on Wooting Two Successful\n");
-#endif
+    DEBUG_PRINT("Enumerate on Wooting Two Successful\n");
     walk_hid_devices(hid_info, set_meta_wooting_two);
   }
   if (PID_ALT_CHECK(WOOTING_TWO_V2_PID)) {
-#ifdef DEBUG_LOG
-    printf("Enumerate on Wooting Two (V2) Successful\n");
-#endif
+    DEBUG_PRINT("Enumerate on Wooting Two (V2) Successful\n");
     walk_hid_devices(hid_info, set_meta_wooting_two_v2);
   }
   if (PID_ALT_CHECK(WOOTING_TWO_LE_PID)) {
-#ifdef DEBUG_LOG
-    printf("Enumerate on Wooting Two Lekker Edition Successful\n");
-#endif
+    DEBUG_PRINT("Enumerate on Wooting Two Lekker Edition Successful\n");
     walk_hid_devices(hid_info, set_meta_wooting_two_le);
   }
   if (PID_ALT_CHECK(WOOTING_TWO_HE_PID)) {
-#ifdef DEBUG_LOG
-    printf("Enumerate on Wooting Two HE Successful\n");
-#endif
+    DEBUG_PRINT("Enumerate on Wooting Two HE Successful\n");
     walk_hid_devices(hid_info, set_meta_wooting_two_he);
   }
   if (PID_ALT_CHECK(WOOTING_TWO_HE_ARM_PID)) {
-#ifdef DEBUG_LOG
-    printf("Enumerate on Wooting Two HE Successful\n");
-#endif
+    DEBUG_PRINT("Enumerate on Wooting Two HE Successful\n");
     walk_hid_devices(hid_info, set_meta_wooting_two_he_arm);
   }
   if (PID_ALT_CHECK(WOOTING_60HE_PID)) {
-#ifdef DEBUG_LOG
-    printf("Enumerate on Wooting 60HE Successful\n");
-#endif
+    DEBUG_PRINT("Enumerate on Wooting 60HE Successful\n");
     walk_hid_devices(hid_info, set_meta_wooting_60he);
   }
   if (PID_ALT_CHECK(WOOTING_60HE_ARM_PID)) {
-#ifdef DEBUG_LOG
-    printf("Enumerate on Wooting 60HE (ARM) Successful\n");
-#endif
+    DEBUG_PRINT("Enumerate on Wooting 60HE (ARM) Successful\n");
     walk_hid_devices(hid_info, set_meta_wooting_60he_arm);
   }
   if (PID_ALT_CHECK(WOOTING_60HE_PLUS_PID)) {
-#ifdef DEBUG_LOG
-    printf("Enumerate on Wooting 60HE+ Successful\n");
-#endif
+    DEBUG_PRINT("Enumerate on Wooting 60HE+ Successful\n");
     walk_hid_devices(hid_info, set_meta_wooting_60he_plus);
   }
 
   if (PID_ALT_CHECK(WOOTING_UWU_PID)) {
-#ifdef DEBUG_LOG
-    printf("Enumerate on Wooting UwU Successful\n");
-#endif
+    DEBUG_PRINT("Enumerate on Wooting UwU Successful\n");
     walk_hid_devices(hid_info, set_meta_wooting_uwu);
   }
 
   if (PID_ALT_CHECK(WOOTING_UWU_RGB_PID)) {
-#ifdef DEBUG_LOG
-    printf("Enumerate on Wooting UwU RGB Successful\n");
-#endif
+    DEBUG_PRINT("Enumerate on Wooting UwU RGB Successful\n");
     walk_hid_devices(hid_info, set_meta_wooting_uwu_rgb);
   }
 
   if (PID_ALT_CHECK(WOOTING_80HE_PID)) {
-#ifdef DEBUG_LOG
-    printf("Enumerate on Wooting 80HE Successful\n");
-#endif
+    DEBUG_PRINT("Enumerate on Wooting 80HE Successful\n");
     walk_hid_devices(hid_info, set_meta_wooting_80he);
   }
 
   enumerating = false;
 
   if (connected_keyboards == 0) {
-#ifdef DEBUG_LOG
-    printf("Enumerate failed\n");
-#endif
+    DEBUG_PRINT("Enumerate failed\n");
     return false;
   }
 
   // Set first found device as default after hid walking
   wooting_usb_select_device(0);
 
-#ifdef DEBUG_LOG
-  printf("Finished looking for keyboards returned: %d\n", connected_keyboards);
-#endif
+  DEBUG_PRINT("Finished looking for keyboards returned: %d\n", connected_keyboards);
   return connected_keyboards > 0;
 }
 
@@ -431,21 +395,15 @@ void walk_hid_devices(struct hid_device_info *hid_info_walker,
   while (hid_info_walker) {
     if (connected_keyboards == WOOTING_MAX_RGB_DEVICES)
       break;
-#ifdef DEBUG_LOG
-    printf("Found interface No: %d\n", hid_info_walker->interface_number);
-    printf("Found usage page: %d\n", hid_info_walker->usage_page);
-#endif
+    DEBUG_PRINT("Found interface No: %d\n", hid_info_walker->interface_number);
+    DEBUG_PRINT("Found usage page: %d\n", hid_info_walker->usage_page);
     if (hid_info_walker->usage_page == CFG_USAGE_PAGE) {
-#ifdef DEBUG_LOG
-      printf("Attempting to open\n");
-#endif
+      DEBUG_PRINT("Attempting to open\n");
       keyboard_handle = hid_open_path(hid_info_walker->path);
       if (keyboard_handle) {
-#ifdef DEBUG_LOG
-        printf("Found keyboard_handle: %s\n", hid_info_walker->path);
-        printf("Opened handle: %p\n", keyboard_handle);
-#endif
-
+        DEBUG_PRINT("Found keyboard_handle: %s\n", hid_info_walker->path);
+        DEBUG_PRINT("Opened handle: %p\n", keyboard_handle);
+        
         // Update pointer array and meta
         keyboard_handle_array[connected_keyboards] = keyboard_handle;
         meta_func(&wooting_usb_meta_array[connected_keyboards]);
@@ -456,9 +414,7 @@ void walk_hid_devices(struct hid_device_info *hid_info_walker,
         int len = hid_get_report_descriptor(keyboard_handle, buff,
                                             HID_API_MAX_REPORT_DESCRIPTOR_SIZE);
         if (len > 0) {
-#ifdef DEBUG_LOG
-          printf("Got descriptor with len %d\n", len);
-#endif
+          DEBUG_PRINT("Got descriptor with len %d\n", len);
           for (int i = 0; i < len; i++) {
             // For this check, we can be a bit basic knowing the descriptors of
             // the Wooting devices. In the cases where it's using small packets,
@@ -473,43 +429,32 @@ void walk_hid_devices(struct hid_device_info *hid_info_walker,
 
               (&wooting_usb_meta_array[connected_keyboards])
                   ->uses_small_packets = true;
-#ifdef DEBUG_LOG
-              printf("Determined that device needs small packets from the HID "
+              DEBUG_PRINT("Determined that device needs small packets from the HID "
                      "report descriptor\n");
-#endif
               break;
             } else if (buff[i] == 0x96) {
 
               (&wooting_usb_meta_array[connected_keyboards])
                   ->uses_small_packets = false;
-#ifdef DEBUG_LOG
-              printf("Determined that device needs big packets from the HID "
+              DEBUG_PRINT("Determined that device needs big packets from the HID "
                      "report descriptor\n");
-#endif
               break;
             }
           }
         } else {
-#ifdef DEBUG_LOG
-          printf("Failed to get report descriptor (%d) Using default packet "
+          DEBUG_PRINT("Failed to get report descriptor (%d) Using default packet "
                  "size (small = %d)\n",
                  len,
                  (&wooting_usb_meta_array[connected_keyboards])
                      ->uses_small_packets);
-#endif
         }
 
         // Any feature sends need to be done after the meta is set so the
         // correct value for v2_interface is set
 
         // Once the keyboard is found send an init command
-#ifdef DEBUG_LOG
-        bool result =
-#endif
-            wooting_usb_send_feature(WOOTING_COLOR_INIT_COMMAND, 0, 0, 0, 0);
-#ifdef DEBUG_LOG
-        printf("Color init result: %d\n", result);
-#endif
+        bool result = wooting_usb_send_feature(WOOTING_COLOR_INIT_COMMAND, 0, 0, 0, 0);
+        DEBUG_PRINT("Color init result: %d\n", result);
 
         (&wooting_usb_meta_array[connected_keyboards])->layout =
             wooting_usb_get_layout();
@@ -518,9 +463,7 @@ void walk_hid_devices(struct hid_device_info *hid_info_walker,
         // array
         connected_keyboards++;
       } else {
-#ifdef DEBUG_LOG
-        printf("No Keyboard handle: %S\n", hid_error(NULL));
-#endif
+        DEBUG_PRINT("No Keyboard handle: %S\n", hid_error(NULL));
       }
     }
     hid_info_walker = hid_info_walker->next;
@@ -544,10 +487,8 @@ bool wooting_usb_select_device(uint8_t device_index) {
 
   wooting_rgb_select_buffer(device_index);
 
-#ifdef DEBUG_LOG
-  printf("Keyboard handle: %p | Model: %s\n", keyboard_handle,
+  DEBUG_PRINT("Keyboard handle: %p | Model: %s\n", keyboard_handle,
          wooting_usb_meta->model);
-#endif
 
   return true;
 }
@@ -622,10 +563,8 @@ bool wooting_usb_send_buffer_v1(RGB_PARTS part_number, uint8_t rgb_buffer[]) {
   if (report_size == WOOTING_REPORT_SIZE) {
     return true;
   } else {
-#ifdef DEBUG_LOG
-    printf("Got report size: %d, expected: %d, disconnecting..\n", report_size,
+    DEBUG_PRINT("Got report size: %d, expected: %d, disconnecting..\n", report_size,
            WOOTING_REPORT_SIZE);
-#endif
     wooting_usb_disconnect(true);
     return false;
   }
@@ -646,9 +585,7 @@ bool wooting_usb_send_buffer_v2(
          WOOTING_RGB_ROWS * WOOTING_RGB_COLS * sizeof(uint16_t));
 
   if (wooting_usb_get_meta()->uses_small_packets) {
-#ifdef DEBUG_LOG
-    printf("Sending v2 buffer using small packets\n");
-#endif
+    DEBUG_PRINT("Sending v2 buffer using small packets\n");
     for (uint8_t i = 0; i < WOOTING_SMALL_PACKET_COUNT; i++) {
       // We have +1 on the packet size for both the buff and what we send as we
       // need to have the report index at the start
@@ -660,11 +597,9 @@ bool wooting_usb_send_buffer_v2(
           hid_write(keyboard_handle, child_buff, WOOTING_SMALL_PACKET_SIZE + 1);
 
       if (child_report != WOOTING_SMALL_PACKET_SIZE + 1) {
-#ifdef DEBUG_LOG
-        printf("Got report size from small buffer no %d: %d, expected: %d, "
+        DEBUG_PRINT("Got report size from small buffer no %d: %d, expected: %d, "
                "disconnecting..\n",
                i, child_report, WOOTING_SMALL_PACKET_SIZE + 1);
-#endif
         wooting_usb_disconnect(true);
         return false;
       }
@@ -674,15 +609,11 @@ bool wooting_usb_send_buffer_v2(
     int report_size =
         hid_write(keyboard_handle, report_buffer, WOOTING_V2_REPORT_SIZE);
     if (report_size == WOOTING_V2_REPORT_SIZE) {
-#ifdef DEBUG_LOG
-      printf("Successfully sent V2 buffer...\n");
-#endif
+      DEBUG_PRINT("Successfully sent V2 buffer...\n");
       return true;
     } else {
-#ifdef DEBUG_LOG
-      printf("Got report size: %d, expected: %d, disconnecting..\n",
+      DEBUG_PRINT("Got report size: %d, expected: %d, disconnecting..\n",
              report_size, WOOTING_V2_REPORT_SIZE);
-#endif
       wooting_usb_disconnect(true);
       return false;
     }
@@ -722,36 +653,28 @@ bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0,
     return false;
   }
 
-#ifdef DEBUG_LOG
-  printf("Sending feature: %d\n", commandId);
-#endif
+  DEBUG_PRINT("Sending feature: %d\n", commandId);
 
   int command_size = wooting_usb_send_feature_buff(
       commandId, parameter0, parameter1, parameter2, parameter3);
   size_t response_size = wooting_usb_get_response_size();
 
-#ifdef DEBUG_LOG
-  printf("Feature sent, Reading response\n");
-#endif
+  DEBUG_PRINT("Feature sent, Reading response\n");
 
   // Just read the response and discard it
   uint8_t *buff = (uint8_t *)calloc(response_size, sizeof(uint8_t));
   int result = wooting_usb_read_response_timeout(buff, response_size,
                                                  WOOTING_READ_RESPONSE_TIMEOUT);
   free(buff);
-#ifdef DEBUG_LOG
-  printf("Read result %d \n", result);
-#endif
+  DEBUG_PRINT("Read result %d \n", result);
 
   if (command_size == WOOTING_COMMAND_SIZE && result == response_size) {
     return true;
   } else {
-#ifdef DEBUG_LOG
-    printf(
+    DEBUG_PRINT(
         "Got command size: %d, expected: %d, Got reponse size: %d, expected: "
         "%d, disconnecting..\n",
         command_size, WOOTING_COMMAND_SIZE, result, (int)response_size);
-#endif
 
     wooting_usb_disconnect(true);
     return false;
@@ -765,9 +688,7 @@ int wooting_usb_send_feature_with_response(
     return -1;
   }
 
-#ifdef DEBUG_LOG
-  printf("Sending feature with response: %d\n", commandId);
-#endif
+  DEBUG_PRINT("Sending feature with response: %d\n", commandId);
 
   int command_size = wooting_usb_send_feature_buff(
       commandId, parameter0, parameter1, parameter2, parameter3);
@@ -783,20 +704,16 @@ int wooting_usb_send_feature_with_response(
       free(responseBuff);
       return result;
     } else {
-#ifdef DEBUG_LOG
-      printf("Got response size: %d, expected: %d, disconnecting..\n", result,
+      DEBUG_PRINT("Got response size: %d, expected: %d, disconnecting..\n", result,
              (int)response_size);
-#endif
 
       free(responseBuff);
       wooting_usb_disconnect(true);
       return -1;
     }
   } else {
-#ifdef DEBUG_LOG
-    printf("Got command size: %d, expected: %d, disconnecting..\n",
+    DEBUG_PRINT("Got command size: %d, expected: %d, disconnecting..\n",
            command_size, WOOTING_COMMAND_SIZE);
-#endif
 
     wooting_usb_disconnect(true);
     return false;
@@ -817,9 +734,7 @@ int wooting_usb_read_response_timeout(uint8_t *buff, size_t len,
                                       int milliseconds) {
   int result = hid_read_timeout(keyboard_handle, buff, len, milliseconds);
   if (result <= 0) {
-#ifdef DEBUG_LOG
-    printf("hid_read_timeout %d error on first read\n", result);
-#endif
+    DEBUG_PRINT("hid_read_timeout %d error on first read\n", result);
     return result;
   }
 
@@ -827,17 +742,13 @@ int wooting_usb_read_response_timeout(uint8_t *buff, size_t len,
     int r = hid_read_timeout(keyboard_handle, buff + result, len - result,
                              milliseconds);
     if (r <= 0) {
-#ifdef DEBUG_LOG
-      printf("hid_read_timeout %d error while reading slice %d\n", r, result);
-#endif
+      DEBUG_PRINT("hid_read_timeout %d error while reading slice %d\n", r, result);
       return r;
     } else {
       result += r;
     }
   }
-#ifdef DEBUG_LOG
-  printf("hid_read_timeout result code: %d\n", result);
-#endif
+  DEBUG_PRINT("hid_read_timeout result code: %d\n", result);
   debug_print_buffer(buff, len);
   return result;
 }
