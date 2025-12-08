@@ -118,6 +118,7 @@ WOOTINGRGBSDK_API uint8_t wooting_usb_device_count(void);
 WOOTINGRGBSDK_API bool wooting_usb_select_device(uint8_t);
 
 WOOTINGRGBSDK_API bool wooting_usb_use_v2_interface(void);
+WOOTINGRGBSDK_API bool wooting_usb_use_multi_report(void);
 WOOTINGRGBSDK_API size_t wooting_usb_get_response_size(void);
 
 WOOTINGRGBSDK_API bool wooting_usb_send_buffer_v1(RGB_PARTS part_number,
