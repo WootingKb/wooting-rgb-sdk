@@ -12,9 +12,10 @@
 #include "wooting-rgb-sdk.h"
 
 #ifdef DEBUG_LOG
-#define DEBUG_PRINT(...) printf(__VA_ARGS__)
+    #define DEBUG_PRINT(...) printf(__VA_ARGS__)
 #else
-#define DEBUG_PRINT(...) (void)0
+    // make the compiler think the vars are actually used, this gets optimized away
+    #define DEBUG_PRINT(...) do { if (0) printf(__VA_ARGS__); } while (0)
 #endif
 
 #define WOOTING_COMMAND_SIZE 8
