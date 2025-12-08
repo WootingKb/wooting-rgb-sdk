@@ -205,8 +205,12 @@ bool wooting_rgb_array_update_keyboard() {
   if (!wooting_rgb_kbd_connected()) {
     return false;
   }
-
-  if (wooting_usb_use_v2_interface()) {
+  
+  if (wooting_usb_use_multi_report()) {
+    if (!wooting_usb_send_buffer_v3(*rgb_buffer_matrix)) {
+      return false;
+    }
+  } else if (wooting_usb_use_v2_interface()) {
     if (!wooting_usb_send_buffer_v2(*rgb_buffer_matrix)) {
       return false;
     }

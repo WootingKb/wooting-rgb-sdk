@@ -66,6 +66,7 @@ typedef struct WOOTING_USB_META {
   bool v2_interface;
   WOOTING_DEVICE_LAYOUT layout;
   bool uses_small_packets;
+  bool uses_multi_report;
 } WOOTING_USB_META;
 
 typedef struct _KeyboardMatrixID {
@@ -123,6 +124,8 @@ WOOTINGRGBSDK_API bool wooting_usb_send_buffer_v1(RGB_PARTS part_number,
                                                   uint8_t rgb_buffer[]);
 WOOTINGRGBSDK_API bool wooting_usb_send_buffer_v2(
     uint16_t rgb_buffer[WOOTING_RGB_ROWS][WOOTING_RGB_COLS]);
+WOOTINGRGBSDK_API bool wooting_usb_send_buffer_v3
+    (uint16_t rgb_buffer[WOOTING_RGB_ROWS][WOOTING_RGB_COLS]);
 WOOTINGRGBSDK_API bool wooting_usb_send_feature(uint8_t commandId,
                                                 uint8_t parameter0,
                                                 uint8_t parameter1,

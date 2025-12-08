@@ -20,10 +20,12 @@
 #define WOOTING_COMMAND_SIZE 8
 #define WOOTING_REPORT_SIZE 128 + 1
 #define WOOTING_V2_REPORT_SIZE 256 + 1
+#define WOOTING_V3_REPORT_SIZE 2046 + 1
 #define WOOTING_SMALL_PACKET_SIZE 64
 #define WOOTING_SMALL_PACKET_COUNT 4
 #define WOOTING_V1_RESPONSE_SIZE 128
 #define WOOTING_V2_RESPONSE_SIZE 256
+#define WOOTING_V3_RESPONSE_SIZE 2046
 
 #define WOOTING_READ_RESPONSE_TIMEOUT 1000
 
@@ -48,11 +50,13 @@
 #define WOOTING_60HE_PID 0x1300
 #define WOOTING_60HE_ARM_PID 0x1310
 #define WOOTING_60HE_PLUS_PID 0x1320
+#define WOOTING_60HEV2_PID 0x1340
 #define WOOTING_UWU_PID 0x1500
 #define WOOTING_UWU_RGB_PID 0x1510
 #define WOOTING_80HE_PID 0x1400
 
 #define CFG_USAGE_PAGE 0x1337
+#define CFG_V3_USAGE_PAGE 0xFF55
 
 static WOOTING_USB_META *wooting_usb_meta;
 
@@ -218,6 +222,16 @@ static void set_meta_wooting_80he(WOOTING_USB_META *device_meta) {
   device_meta->uses_small_packets = false;
 }
 
+static void set_meta_wooting_60hev2(WOOTING_USB_META *device_meta) {
+  device_meta->model = "Wooting 60HE V2";
+  device_meta->device_type = DEVICE_KEYBOARD_60;
+  device_meta->max_rows = WOOTING_RGB_ROWS;
+  device_meta->max_columns = 14;
+  device_meta->led_index_max = WOOTING_TWO_KEY_CODE_LIMIT;
+  device_meta->v2_interface = true;
+  device_meta->uses_small_packets = false;
+}
+
 WOOTING_USB_META *wooting_usb_get_meta() {
   // We want to initialise the struct to the default values if it hasn't been
   // set
@@ -230,6 +244,11 @@ WOOTING_USB_META *wooting_usb_get_meta() {
 
 bool wooting_usb_use_v2_interface(void) {
   return wooting_usb_meta->v2_interface;
+}
+
+bool wooting_usb_use_multi_report(void)
+{
+  return wooting_usb_meta->uses_multi_report;
 }
 
 void wooting_usb_disconnect(bool trigger_cb) {
@@ -373,6 +392,11 @@ bool wooting_usb_find_keyboard() {
     DEBUG_PRINT("Enumerate on Wooting 80HE Successful\n");
     walk_hid_devices(hid_info, set_meta_wooting_80he);
   }
+  
+  if (PID_ALT_CHECK(WOOTING_60HEV2_PID)) {
+    DEBUG_PRINT("Enumerate on Wooting 60HE V2 Successful\n");
+    walk_hid_devices(hid_info, set_meta_wooting_60hev2);
+  }
 
   enumerating = false;
 
@@ -397,7 +421,8 @@ void walk_hid_devices(struct hid_device_info *hid_info_walker,
       break;
     DEBUG_PRINT("Found interface No: %d\n", hid_info_walker->interface_number);
     DEBUG_PRINT("Found usage page: %d\n", hid_info_walker->usage_page);
-    if (hid_info_walker->usage_page == CFG_USAGE_PAGE) {
+    if (hid_info_walker->usage_page == CFG_USAGE_PAGE ||
+        hid_info_walker->usage_page == CFG_V3_USAGE_PAGE) {
       DEBUG_PRINT("Attempting to open\n");
       keyboard_handle = hid_open_path(hid_info_walker->path);
       if (keyboard_handle) {
@@ -408,45 +433,51 @@ void walk_hid_devices(struct hid_device_info *hid_info_walker,
         keyboard_handle_array[connected_keyboards] = keyboard_handle;
         meta_func(&wooting_usb_meta_array[connected_keyboards]);
         (&wooting_usb_meta_array[connected_keyboards])->connected = true;
-
-        unsigned char buff[HID_API_MAX_REPORT_DESCRIPTOR_SIZE];
-
-        int len = hid_get_report_descriptor(keyboard_handle, buff,
-                                            HID_API_MAX_REPORT_DESCRIPTOR_SIZE);
-        if (len > 0) {
-          DEBUG_PRINT("Got descriptor with len %d\n", len);
-          for (int i = 0; i < len; i++) {
-            // For this check, we can be a bit basic knowing the descriptors of
-            // the Wooting devices. In the cases where it's using small packets,
-            // we'll see the 0x95 byte, indicating the Report size, but with
-            // only one byte parameter (i.e. 64). For big packet, it's 256, and
-            // that has to be represented in two bytes, which means we use 0x96
-            // as the byte to indicate the report size declaration. So a more
-            // general purpose implementation would read what the value is after
-            // the Report Size (0x95/6) byte, but it's a bit unnecessary for us
-            // to do that when we know the descriptors.
-            if (buff[i] == 0x95) {
-
-              (&wooting_usb_meta_array[connected_keyboards])
-                  ->uses_small_packets = true;
-              DEBUG_PRINT("Determined that device needs small packets from the HID "
-                     "report descriptor\n");
-              break;
-            } else if (buff[i] == 0x96) {
-
-              (&wooting_usb_meta_array[connected_keyboards])
-                  ->uses_small_packets = false;
-              DEBUG_PRINT("Determined that device needs big packets from the HID "
-                     "report descriptor\n");
-              break;
-            }
-          }
+        
+        //if the usage page is v3, we already know it uses multi report and thus can skip the rest of this
+        if (hid_info_walker->usage_page == CFG_V3_USAGE_PAGE) {
+          (&wooting_usb_meta_array[connected_keyboards])->uses_multi_report = true;
+          DEBUG_PRINT("Determined that device uses multi report from usage page\n");
         } else {
-          DEBUG_PRINT("Failed to get report descriptor (%d) Using default packet "
-                 "size (small = %d)\n",
-                 len,
-                 (&wooting_usb_meta_array[connected_keyboards])
-                     ->uses_small_packets);
+          unsigned char buff[HID_API_MAX_REPORT_DESCRIPTOR_SIZE];
+
+          int len = hid_get_report_descriptor(keyboard_handle, buff,
+                                              HID_API_MAX_REPORT_DESCRIPTOR_SIZE);
+          if (len > 0) {
+            DEBUG_PRINT("Got descriptor with len %d\n", len);
+            for (int i = 0; i < len; i++) {
+              // For this check, we can be a bit basic knowing the descriptors of
+              // the Wooting devices. In the cases where it's using small packets,
+              // we'll see the 0x95 byte, indicating the Report size, but with
+              // only one byte parameter (i.e. 64). For big packet, it's 256, and
+              // that has to be represented in two bytes, which means we use 0x96
+              // as the byte to indicate the report size declaration. So a more
+              // general purpose implementation would read what the value is after
+              // the Report Size (0x95/6) byte, but it's a bit unnecessary for us
+              // to do that when we know the descriptors.
+              if (buff[i] == 0x95) {
+
+                (&wooting_usb_meta_array[connected_keyboards])
+                    ->uses_small_packets = true;
+                DEBUG_PRINT("Determined that device needs small packets from the HID "
+                       "report descriptor\n");
+                break;
+              } else if (buff[i] == 0x96) {
+
+                (&wooting_usb_meta_array[connected_keyboards])
+                    ->uses_small_packets = false;
+                DEBUG_PRINT("Determined that device needs big packets from the HID "
+                       "report descriptor\n");
+                break;
+              }
+            }
+          } else {
+            DEBUG_PRINT("Failed to get report descriptor (%d) Using default packet "
+                   "size (small = %d)\n",
+                   len,
+                   (&wooting_usb_meta_array[connected_keyboards])
+                       ->uses_small_packets);
+          }
         }
 
         // Any feature sends need to be done after the meta is set so the
@@ -620,13 +651,42 @@ bool wooting_usb_send_buffer_v2(
   }
 }
 
+bool wooting_usb_send_buffer_v3(
+    uint16_t rgb_buffer[WOOTING_RGB_ROWS][WOOTING_RGB_COLS]) {
+  if (!wooting_usb_find_keyboard()) {
+    return false;
+  }
+
+  uint8_t report_buffer[WOOTING_V3_REPORT_SIZE] = {0};
+  report_buffer[0] = 5;                         // HID report index is  5 which corresponds to 510 byte report.
+  //unfortunately, the `4` byte report is 254 bytes long, which is 1 byte short of what we need for full RGB data
+  report_buffer[1] = 0xD1;                      // Magicword
+  report_buffer[2] = 0xDA;                      // Magicword
+  report_buffer[3] = WOOTING_RAW_COLORS_REPORT; // Report ID
+  memcpy(&report_buffer[4], rgb_buffer,
+         WOOTING_RGB_ROWS * WOOTING_RGB_COLS * sizeof(uint16_t));
+
+    int report_size =
+        hid_write(keyboard_handle, report_buffer, WOOTING_V3_REPORT_SIZE);
+    if (report_size == WOOTING_V3_REPORT_SIZE) {
+      DEBUG_PRINT("Successfully sent V3 buffer...\n");
+      return true;
+    } else {
+      DEBUG_PRINT("Got report size: %d, expected: %d, disconnecting..\n",
+             report_size, WOOTING_V3_REPORT_SIZE);
+      wooting_usb_disconnect(true);
+      return false;
+    }
+  }
+
 int wooting_usb_send_feature_buff(uint8_t commandId, uint8_t parameter0,
                                   uint8_t parameter1, uint8_t parameter2,
                                   uint8_t parameter3) {
+  bool is_multi_report = wooting_usb_use_multi_report();
   uint8_t report_buffer[WOOTING_COMMAND_SIZE];
 
-  report_buffer[0] = 0;    // HID report index (unused)
-  report_buffer[1] = 0xD0; // Magic word
+  report_buffer[0] = is_multi_report ? 1 : 0;    // HID report index (unused)
+  report_buffer[1] = is_multi_report ? 0xD1 : 0xD0; // Magic word
   report_buffer[2] = 0xDA; // Magic word
   report_buffer[3] = commandId;
   report_buffer[4] = parameter3;
@@ -639,7 +699,9 @@ int wooting_usb_send_feature_buff(uint8_t commandId, uint8_t parameter0,
 }
 
 size_t wooting_usb_get_response_size(void) {
-  if (wooting_usb_use_v2_interface()) {
+  if (wooting_usb_use_multi_report()) {
+    return WOOTING_V3_RESPONSE_SIZE;
+  } else if (wooting_usb_use_v2_interface()) {
     return WOOTING_V2_RESPONSE_SIZE;
   } else {
     return WOOTING_V1_RESPONSE_SIZE;
