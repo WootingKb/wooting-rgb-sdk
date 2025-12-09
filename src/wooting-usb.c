@@ -272,7 +272,23 @@ WOOTING_DEVICE_LAYOUT wooting_usb_get_layout() {
   return LAYOUT_UNKNOWN;
 }
 
+static bool initd = false;
+
+#include "hidapi_darwin.h"
 bool wooting_usb_find_keyboard() {
+  if (!initd) {
+    if (hid_init() != 0) {
+      printf("Failed to init hidapi %S\n", hid_error(NULL));
+      return false;
+    }
+
+    hid_darwin_set_open_exclusive(0);
+
+    printf("hidapi initialized in non-exclusive mode\n");
+
+    initd = true;
+  }
+
   if (keyboard_handle || connected_keyboards > 0) {
     // #ifdef DEBUG_LOG
     // printf("Got keyboard handle already\n");
