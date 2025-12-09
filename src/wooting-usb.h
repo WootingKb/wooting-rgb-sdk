@@ -51,7 +51,11 @@ typedef enum WOOTING_DEVICE_TYPE {
 typedef enum WOOTING_DEVICE_LAYOUT {
   LAYOUT_UNKNOWN = -1,
   LAYOUT_ANSI = 0,
-  LAYOUT_ISO = 1
+  LAYOUT_ISO = 1,
+  LAYOUT_JIS = 2,
+  LAYOUT_ANSI_SPLIT = 3,
+  LAYOUT_ISO_SPLIT = 4,
+  LAYOUT_MAX = LAYOUT_ISO_SPLIT
 } WOOTING_DEVICE_LAYOUT;
 
 typedef struct WOOTING_USB_META {
@@ -64,6 +68,7 @@ typedef struct WOOTING_USB_META {
   bool v2_interface;
   WOOTING_DEVICE_LAYOUT layout;
   bool uses_small_packets;
+  bool uses_multi_report;
 } WOOTING_USB_META;
 
 typedef struct _KeyboardMatrixID {
@@ -115,12 +120,15 @@ WOOTINGRGBSDK_API uint8_t wooting_usb_device_count(void);
 WOOTINGRGBSDK_API bool wooting_usb_select_device(uint8_t);
 
 WOOTINGRGBSDK_API bool wooting_usb_use_v2_interface(void);
+WOOTINGRGBSDK_API bool wooting_usb_use_multi_report(void);
 WOOTINGRGBSDK_API size_t wooting_usb_get_response_size(void);
 
 WOOTINGRGBSDK_API bool wooting_usb_send_buffer_v1(RGB_PARTS part_number,
                                                   uint8_t rgb_buffer[]);
 WOOTINGRGBSDK_API bool wooting_usb_send_buffer_v2(
     uint16_t rgb_buffer[WOOTING_RGB_ROWS][WOOTING_RGB_COLS]);
+WOOTINGRGBSDK_API bool wooting_usb_send_buffer_v3
+    (uint16_t rgb_buffer[WOOTING_RGB_ROWS][WOOTING_RGB_COLS]);
 WOOTINGRGBSDK_API bool wooting_usb_send_feature(uint8_t commandId,
                                                 uint8_t parameter0,
                                                 uint8_t parameter1,

@@ -1,5 +1,6 @@
 
 \.vs/
+\.idea/
 
 windows/\.vs/wooting-analog-reader/v14/\.suo
 
@@ -7,6 +8,7 @@ windows/Release/
 windows/Backup/
 windows/Debug/
 windows/x64/
+windows/**/x64/
 
 *.htm
 
