@@ -105,6 +105,7 @@ static void reset_meta(WOOTING_USB_META *device_meta) {
   device_meta->v2_interface = false;
   device_meta->layout = LAYOUT_UNKNOWN;
   device_meta->uses_small_packets = false;
+  device_meta->uses_multi_report = false;
 }
 
 static void set_meta_wooting_one(WOOTING_USB_META *device_meta) {
@@ -709,6 +710,13 @@ size_t wooting_usb_get_response_size(void) {
   }
 }
 
+static bool wooting_usb_response_complete(int result, size_t expected) {
+  if (wooting_usb_use_multi_report()) {
+    return result > 0;
+  }
+  return result == (int)expected;
+}
+
 bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0,
                               uint8_t parameter1, uint8_t parameter2,
                               uint8_t parameter3) {
@@ -731,7 +739,8 @@ bool wooting_usb_send_feature(uint8_t commandId, uint8_t parameter0,
   free(buff);
   DEBUG_PRINT("Read result %d \n", result);
 
-  if (command_size == WOOTING_COMMAND_SIZE && result == response_size) {
+  if (command_size == WOOTING_COMMAND_SIZE &&
+      wooting_usb_response_complete(result, response_size)) {
     return true;
   } else {
     DEBUG_PRINT(
@@ -762,7 +771,7 @@ int wooting_usb_send_feature_with_response(
     int result = wooting_usb_read_response_timeout(
         responseBuff, response_size, WOOTING_READ_RESPONSE_TIMEOUT);
 
-    if (result == response_size) {
+    if (wooting_usb_response_complete(result, response_size)) {
       memcpy(buff, responseBuff, len);
       free(responseBuff);
       return result;
@@ -801,7 +810,9 @@ int wooting_usb_read_response_timeout(uint8_t *buff, size_t len,
     return result;
   }
 
-  while (result < len) {
+  // Multi-report responses fit in one numbered report, which may be shorter
+  // than the buffer. Legacy responses can require multiple reads.
+  while (!wooting_usb_use_multi_report() && result < len) {
     int r = hid_read_timeout(keyboard_handle, buff + result, len - result,
                              milliseconds);
     if (r <= 0) {
@@ -812,7 +823,7 @@ int wooting_usb_read_response_timeout(uint8_t *buff, size_t len,
     }
   }
   DEBUG_PRINT("hid_read_timeout result code: %d\n", result);
-  debug_print_buffer(buff, len);
+  debug_print_buffer(buff, result);
   return result;
 }
 
